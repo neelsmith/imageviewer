@@ -20,7 +20,8 @@ export function parseDelimited(text: string, delimiter = "|"): DelimitedTable {
     if (line === "" || line.startsWith("//") || line.startsWith("#!")) return;
     const cells = raw.split(delimiter).map((c) => c.trim());
     if (!headers) {
-      headers = cells.map((h) => h.toLowerCase());
+      // "Cex File" and "cex_file" both become "cex_file".
+      headers = cells.map((h) => h.toLowerCase().replace(/\s+/g, "_"));
       return;
     }
     if (cells.length !== headers.length) {
