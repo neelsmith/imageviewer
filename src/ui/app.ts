@@ -1,6 +1,6 @@
 import type { AppConfig } from "../lib/config";
 import type { Photo } from "../lib/types";
-import { filterPhotos, groupPhotos, placeLabel, type GroupMode, type PhotoGroup } from "../lib/group";
+import { groupPhotos, selectPhotos, placeLabel, type GroupMode, type PhotoGroup } from "../lib/group";
 import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
 import { versionLabel } from "../lib/version";
@@ -39,6 +39,11 @@ export interface AppOptions {
   toolbar?: HTMLElement[];
   /** Offer loading catalog.cex/images.cex from disk when nothing loads (default true). */
   localFallback?: boolean;
+  /**
+   * Show a "Cataloged images only" checkbox (on by default). Unticking it shows
+   * every image; that choice is kept in the URL hash as `all=1`.
+   */
+  catalogToggle?: boolean;
 }
 
 export interface AppHandle {
@@ -52,6 +57,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   let mode: GroupMode = (readHash(location.hash).group as GroupMode) || "date";
   if (!MODES.some((m) => m.mode === mode)) mode = "date";
   let query = "";
+  let catalogedOnly = !!opts.catalogToggle && readHash(location.hash).all !== "1";
   let visible: Photo[] = []; // flattened order for lightbox navigation
 
   const count = el("span", { class: "count" });
@@ -59,8 +65,20 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   const seg = el("div", { class: "seg", role: "radiogroup", "aria-label": "Group by" });
   const notices = el("div", { class: "notices" });
   const main = el("main", { class: "groups" });
+  const toggle: HTMLElement[] = [];
+  if (opts.catalogToggle) {
+    const box = el("input", { type: "checkbox" });
+    box.checked = catalogedOnly;
+    box.addEventListener("change", () => {
+      catalogedOnly = box.checked;
+      history.replaceState(null, "",
+        withHash(location.hash, { all: catalogedOnly ? null : "1" }) || location.pathname + location.search);
+      render();
+    });
+    toggle.push(el("label", { class: "toggle" }, box, " Cataloged images only"));
+  }
   const header = el("header", { class: "bar" },
-    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, search, count, versionLabel());
+    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, ...toggle, search, count, versionLabel());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);
@@ -138,14 +156,17 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   function render() {
     seg.querySelectorAll("button").forEach((b) =>
       b.setAttribute("aria-checked", String(b.dataset.mode === mode)));
-    const groups = groupPhotos(filterPhotos(all, query), mode);
+    const pool = catalogedOnly ? all.filter((p) => p.cataloged) : all;
+    const groups = groupPhotos(selectPhotos(all, { catalogedOnly, query }), mode);
     visible = groups.flatMap((g) => g.photos);
     let start = 0;
     const sections = groups.map((g) => { const s = section(g, start); start += g.photos.length; return s; });
     const shown = new Set(visible.map((p) => p.path)).size;
-    count.textContent = `${shown} of ${all.length} photos`;
-    main.replaceChildren(...(sections.length ? sections
-      : [el("p", { class: "empty" }, all.length ? "No photos match the filter." : "No photos loaded.")]));
+    count.textContent = `${shown} of ${pool.length} ${catalogedOnly ? "cataloged " : ""}photos`;
+    const empty = !all.length ? "No photos loaded."
+      : !pool.length ? "No cataloged photos. Untick “Cataloged images only” to see all images."
+      : "No photos match the filter.";
+    main.replaceChildren(...(sections.length ? sections : [el("p", { class: "empty" }, empty)]));
   }
 
   function renderNotices(failed: boolean) {

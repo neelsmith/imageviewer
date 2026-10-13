@@ -19,6 +19,8 @@ body { margin: 0; background: var(--bg); color: var(--fg);
 .seg button[aria-checked="true"] { background: var(--accent); color: var(--accent-fg); }
 .bar input[type="search"] { flex: 1 1 180px; max-width: 360px; padding: 6px 12px; font: inherit;
   border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: inherit; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.toggle input { accent-color: var(--accent); margin: 0; }
 .count { color: var(--muted); font-size: 13px; margin-left: auto; }
 .version { color: var(--muted); font-size: 12px; text-decoration: none; opacity: .8; }
 a.version:hover { text-decoration: underline; opacity: 1; }

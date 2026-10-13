@@ -127,3 +127,14 @@
 - check-release: tag argument now optional (defaults to v<package.json version>); Neel hit 'Tag ""' running it without one.
 - check-release no longer checks docs/private.html (Neel moves it around docs/); only docs/index.html.
 - Wrote notes/maintenance.md (catalog updates; adding images).
+
+## 2026-10-13 — session 9: "Cataloged images only" toggle (private.html)
+
+- `startApp` option `catalogToggle` (used only by main-private.ts): checkbox in the bar,
+  on by default; off shows all images and stores `all=1` in the URL hash. Count reads
+  "N of M cataloged photos" when on. Pure helper `selectPhotos` in lib/group.ts.
+- First UI flow tests (`test/app.test.ts`, jsdom): toggle default, untick/retick, hash
+  restore, absent in index.html. 44 Vitest pass. Browser check with real data: 1 cataloged
+  ↔ 685 total, state survives reload.
+- Not released: app code changed since v1.0.0, so the next release needs a version bump
+  (suggested 1.1.0) — Neel's call.

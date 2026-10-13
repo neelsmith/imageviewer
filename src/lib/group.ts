@@ -84,3 +84,8 @@ export function filterPhotos(photos: Photo[], query: string): Photo[] {
     return terms.every((t) => hay.includes(t));
   });
 }
+
+/** Photos to show: optionally only cataloged ones, then the text filter. */
+export function selectPhotos(photos: Photo[], opts: { catalogedOnly: boolean; query: string }): Photo[] {
+  return filterPhotos(opts.catalogedOnly ? photos.filter((p) => p.cataloged) : photos, opts.query);
+}
