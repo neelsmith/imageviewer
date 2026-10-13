@@ -3,7 +3,7 @@ import type { Photo } from "../lib/types";
 import { facetValues, groupPhotos, selectPhotos, placeLabel, type Facet, type GroupMode, type PhotoGroup } from "../lib/group";
 import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
-import { versionLabel } from "../lib/version";
+import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
 
 const MODES: { mode: GroupMode; label: string }[] = [
@@ -115,7 +115,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     toggle.push(el("label", { class: "toggle" }, box, " Cataloged images only"));
   }
   const header = el("header", { class: "bar" },
-    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, yearSel, placeSel, ...toggle, search, count, versionLabel());
+    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, yearSel, placeSel, ...toggle, search, count, versionInfo());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);

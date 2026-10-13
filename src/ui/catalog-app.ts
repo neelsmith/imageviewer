@@ -4,7 +4,7 @@ import { catalogKey, forget } from "../lib/auth";
 import { readHash, withHash } from "../lib/hash";
 import { startApp, type AppHandle } from "./app";
 import { passwordGate } from "./gate";
-import { versionLabel } from "../lib/version";
+import { versionInfo } from "../lib/version";
 import { fetchText, loadCatalog } from "./load";
 
 export interface CatalogAppOptions {
@@ -95,7 +95,7 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
     p.textContent = "Choose a catalog:";
     menu.append(h, p, list);
     if (errors.length) menu.append(message(errors.join(" ")));
-    menu.append(versionLabel());
+    menu.append(versionInfo());
     root.replaceChildren(menu);
     list.querySelector("button")?.focus();
   }

@@ -2,6 +2,7 @@ import { parseCatalog } from "../lib/catalog";
 import { parseImagesIndex } from "../lib/images";
 import { mergePhotos, type MergeResult } from "../lib/merge";
 import type { AppConfig } from "../lib/config";
+import { parseDataUpdated, setDataUpdated } from "../lib/version";
 
 export interface LoadResult extends MergeResult {
   warnings: string[];
@@ -44,6 +45,15 @@ export function buildPhotos(
   if (merged.missingFiles.length)
     warnings.push(`${merged.missingFiles.length} cataloged image(s) not found in images.cex.`);
   return { ...merged, warnings };
+}
+
+/** Read data/last-updated.txt (optional) and show the date beside the app version. */
+export async function loadDataUpdated(cfg: AppConfig): Promise<void> {
+  const text = await fetchText(cfg.dataBase + "last-updated.txt");
+  if (text === null) return;
+  const date = parseDataUpdated(text);
+  if (!date) console.warn("data/last-updated.txt should hold a date like 2026-10-13");
+  setDataUpdated(date);
 }
 
 export async function loadRemote(cfg: AppConfig): Promise<LoadResult> {
