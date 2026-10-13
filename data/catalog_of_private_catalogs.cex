@@ -1,2 +1,3 @@
 cex_file|label|password
 data/private/brunswick.cex|Brunswick, ME|pbkdf2-sha256:600000:98Udhe3PDpo24vvTUOeAbg==:QClKG6SwBXpd/I13K53e4d9uHpSHntm5ME9pvoPbk8Y=
+data/private/home_life.cex|Life under construction|pbkdf2-sha256:600000:USIxS8UiTHxpiPFnRpnsWQ==:mdsRWXsYU8q2r2vP7w06e0MnzI2WAfTNeFw6T89iaWo=
