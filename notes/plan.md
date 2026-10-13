@@ -1,0 +1,147 @@
+# imageviewer — initial development plan
+
+_Drafted 2026-10-13. Source of truth for requirements is `../CLAUDE.md`._
+
+## Decisions so far
+
+| Question | Decision |
+|---|---|
+| Image hosting | pCloud **Public Folder** (static `filedn.com` URLs) |
+| Catalog location | Fetched at runtime from **this GitHub repo** (`data/catalog.cex`), so it can be updated without rebuilding |
+| Dates / locations | From photo EXIF, extracted by a local tool (browser can't read pCloud image bytes) |
+| Tag separator | Comma |
+| Build | Vite, bundled to a single self-contained `index.html` |
+| Build output | `src/dist/index.html` only; Neel copies to `docs/` when publishing |
+
+## CORS findings (2026-10-13)
+
+- filedn.com sends no `Access-Control-Allow-Origin`: fetch from `http://localhost` fails.
+  From `file://` it worked in Safari only (Safari is lenient; Chrome/Firefox likely not).
+- Images still display via `<img>` (no CORS needed), but the browser can't read their
+  bytes, so EXIF must be read locally by the tool, not in the app.
+- `raw.githubusercontent.com` sends `Access-Control-Allow-Origin: *` (verified), so data
+  files in the repo are fetchable from file://, localhost and GitHub Pages alike.
+  Requires the repo to be public. (A test fetch of README returned 404 — check repo visibility.)
+
+## Revised data flow
+
+```
+pCloud Public Folder (synced locally)          GitHub repo (public)
+  images/…  ──► src/tools/make-index ──────►  data/images.cex   (path|date|lat|lon|place|w|h)
+                                              data/catalog.cex  (edited by Neel)
+                    app (single HTML) ── fetch ──► raw.githubusercontent.com/…/data/*.cex
+                                      ── <img> ──► filedn.com/…/path
+```
+
+The images index replaces the earlier "manifest" idea and carries EXIF data. After adding
+photos: run the tool, commit `data/images.cex`. After editing the catalog: just commit.
+
+## Consequences of the original decisions (partly superseded above)
+
+- **No directory listing.** A Public Folder serves files by URL but the app can't ask
+  "what's in this folder?" Since only *some* images are in the catalog, the app needs a
+  **manifest** (plain list of image paths) to find the uncataloged ones. Plan: a small
+  CLI in `src/tools/` that walks the locally synced pCloud folder and writes
+  `manifest.txt` into it.
+- **No thumbnail service.** Grid would otherwise load full-size originals. The same tool
+  can optionally write downscaled copies to a `thumbs/` subfolder; the app uses them when
+  present and falls back to originals with `loading="lazy"`.
+- **CORS risk.** `<img>` tags work cross-origin without CORS, but `fetch()` of the catalog
+  and manifest needs `filedn.com` to send `Access-Control-Allow-Origin`. This must be
+  verified first (Phase 0). Fallback: drag-and-drop / file-picker to load catalog and
+  manifest locally.
+- **file:// use.** The single HTML must not rely on ES-module script tags or relative
+  fetches; everything is inlined and all data URLs are absolute.
+
+## Catalog format (confirmed 2026-10-13)
+
+`catalog.cex` at `https://filedn.com/ldIRRzyYNhLyfSxf2i1xC0B/catalog.cex`, pipe-delimited,
+header line:
+
+```
+path|caption|credits|license|tags
+leiden-ply/IMG_1203.jpeg|MS Lips 7, signout card.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny
+```
+
+- `path` is relative to the Public Folder root and may include subfolders.
+- **No date or location columns.** Grouping by date/location needs another source —
+  see open questions.
+
+## Phase 0 — Spike (verify before building)
+
+1. Get the Public Folder base URL and a sample catalog (first ~20 rows + header).
+2. From a page opened via `file://` and via `localhost`, `fetch()` a text file from the
+   Public Folder; record whether CORS allows it.
+3. Confirm catalog delimiter, columns, date format, how tags/locations are written.
+   (Your other projects use `.cex`/pipe-delimited — parser will auto-detect `|`, tab, comma.)
+
+## Phase 1 — Scaffold (`src/`)
+
+- `package.json`, Vite + `vite-plugin-singlefile`, TypeScript, Vitest, Playwright.
+- Scripts: `dev`, `build` (→ `src/dist/index.html`), `test`, `test:e2e`.
+- `src/fixtures/`: a tiny fake "public folder" (a few small images, catalog, manifest)
+  served locally so tests never depend on pCloud.
+- `.gitignore` for `node_modules/`, `dist/`, Playwright reports.
+
+## Phase 2 — Data layer (pure functions, unit-tested)
+
+- `config` — base URL, catalog/manifest filenames; overridable by URL query params
+  (`?base=...&catalog=...`) and an inline config block.
+- `catalog` — parse delimited text: delimiter detection, header → field mapping, date
+  normalisation (full date, year-month, year-only), tag splitting, tolerant of blank/bad rows
+  (reported, not fatal).
+- `manifest` — parse image list; filter by image extensions.
+- `merge` — join manifest + catalog by path/filename → `Photo[]` with
+  `cataloged: boolean`; report catalog rows whose file is missing.
+- `group` — `byDate` (year → month, newest first), `byLocation`, `byTag` (a photo may
+  appear under several tags). Every mode gets an explicit bucket for photos without that
+  field ("Uncataloged", "No date", "No location", "Untagged").
+
+## Phase 3 — UI (immich-like)
+
+- Top bar: title, group-by switch (Date / Location / Tag), text filter, photo count.
+- Main view: sections with sticky headers; justified-row grid using image aspect ratios
+  (fixed-height squares as first cut).
+- Lazy loading + `IntersectionObserver`; virtualise sections if collections are large.
+- Lightbox: full image, prev/next (arrow keys, swipe), Esc to close, metadata side panel
+  (date, location, tags, filename, "not in catalog" badge), link to original.
+- Date mode: right-edge scrubber for jumping by year/month (later in phase).
+- Deep links via URL hash (`#group=tag&photo=...`) so views can be bookmarked.
+- Loading, empty, and error states (CORS failure → offer local file loading).
+
+## Phase 4 — Tests
+
+- Vitest: every data-layer module (target: all parsing/grouping edge cases).
+- Playwright against fixtures: initial load, switching groupings, filtering, opening and
+  navigating the lightbox, uncataloged bucket, error state. One test opens the built
+  `dist/index.html` via `file://` to guarantee the single-file requirement holds.
+
+## Phase 5 — Manifest/thumbnail tool (`src/tools/`)
+
+- Node CLI: `make-manifest <local pCloud folder>` → `manifest.txt` (+ optional
+  `--thumbs` using `sharp`, and optional pixel dimensions so the grid can lay out before
+  images load).
+
+## Later / not yet planned
+
+Map view for locations, EXIF reading for uncataloged images, favourites, slideshow.
+
+## Open questions for Neel
+
+1. ~~Public Folder base URL, sample catalog~~ (done). Still needed: CORS result for
+   `catalog.cex` (Claude's sandbox can't reach filedn.com — blocked by network allowlist).
+1a. ~~Resolved: EXIF via local tool.~~ Date/location aren't in the catalog. Options: read EXIF (date taken, GPS) from the
+   images — in the manifest tool (cheap, done once) or in the browser (costly); add
+   `date`/`location` columns to the catalog; use the subfolder (`leiden-ply/`) as a
+   grouping. Probably also add "group by folder".
+1b. ~~Resolved: comma.~~ How are multiple tags separated in the `tags` column (`,` `;` `#`)?
+2. Roughly how many images? (Decides whether virtualisation is needed early.)
+3. Is location free text ("Worcester, MA") or coordinates? Coordinates would enable a map.
+4. What is the empty `touch/` directory for?
+5. CLAUDE.md doesn't say whether Claude may commit/push (proarchia says never). Assume
+   **never** unless told otherwise.
+6. Is the repo public? (raw.githubusercontent.com needs it.)
+7. Local path of the synced pCloud Public Folder (e.g. `~/pCloud Drive/Public Folder`).
+8. Location grouping from GPS needs place names: reverse-geocode in the tool (cached,
+   city/region level), or group by rounded coordinates? Is `data/` OK as the home for
+   these files (Neel owns `catalog.cex`; the tool owns `images.cex`)?

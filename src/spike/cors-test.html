@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>pCloud CORS test</title>
+<body style="font:16px system-ui;margin:2em">
+<h1>pCloud CORS test</h1>
+<p>Page origin: <code id="o"></code></p>
+<pre id="out">Fetching…</pre>
+<script>
+const url = "https://filedn.com/ldIRRzyYNhLyfSxf2i1xC0B/catalog.cex";
+document.getElementById("o").textContent = location.origin;
+const out = document.getElementById("out");
+fetch(url)
+  .then(r => r.text().then(t => out.textContent =
+    `OK — HTTP ${r.status}\nCORS allowed: catalog is readable.\n\n${t.slice(0, 2000)}`))
+  .catch(e => out.textContent =
+    `FAILED: ${e}\n\nIf the console mentions Access-Control-Allow-Origin, pCloud does not allow CORS.`);
+</script>
