@@ -126,3 +126,4 @@
 - Removed stale src/dist/catalogs.html (gitignored build output).
 - check-release: tag argument now optional (defaults to v<package.json version>); Neel hit 'Tag ""' running it without one.
 - check-release no longer checks docs/private.html (Neel moves it around docs/); only docs/index.html.
+- Wrote notes/maintenance.md (catalog updates; adding images).
