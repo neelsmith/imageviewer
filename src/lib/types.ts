@@ -27,6 +27,8 @@ export interface ImageRecord {
 export interface Photo {
   path: string;
   url: string;
+  /** Small grid thumbnail (made by utils/make-thumbnails.mjs); may not exist yet. */
+  thumb: string;
   caption: string;
   credits: string;
   license: string;

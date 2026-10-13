@@ -43,3 +43,8 @@ test("serialize sorts rows and strips delimiters from values; parseExisting roun
   assert.equal(rows.get("b.jpg").city, "A B");
   assert.equal(rows.size, 2);
 });
+
+test("thumbPath", async () => {
+  const { thumbPath } = await import("../lib/index-lib.mjs");
+  assert.equal(thumbPath("leiden-pliny/IMG_1200.jpeg"), "_thumbs/leiden-pliny/IMG_1200.jpeg.jpg");
+});
