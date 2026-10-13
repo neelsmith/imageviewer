@@ -1,7 +1,7 @@
 # Version info
 
 
-Current version: **1.2.0**
+Current version: **1.3.0**
 
 **1.3.0**, *Oct. 13, 2026*: 
 
