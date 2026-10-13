@@ -9,7 +9,8 @@
     "test": "node --test \"test/*.test.mjs\"",
     "set-password": "node set-password.mjs",
     "check-release": "node check-release.mjs",
-    "thumbnails": "node make-thumbnails.mjs"
+    "thumbnails": "node make-thumbnails.mjs",
+    "cull-thumbnails": "node cull-thumbnails.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",

@@ -192,3 +192,12 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - 4 new jsdom tests; 57 Vitest pass, typecheck clean. Headless Chromium on the built
   index.html with real data from GitHub main: deep link, close, tile, Back, Forward, Esc OK.
 - Not committed or released (app change → next version bump).
+
+## 2026-10-13 — session 14: cull obsolete thumbnails
+
+- `utils/cull-thumbnails.mjs` (`npm run cull-thumbnails`, `--root`, `--delete`): lists
+  `_thumbs/**/*.jpg` with no matching image (via listImages/thumbPath); dry run by default;
+  `--delete` removes them plus emptied folders (dotfile-only folders count as empty).
+  Non-.jpg files in _thumbs/ are reported and left alone. Refuses to delete when the root
+  has no images. 4 node:test tests; 28 utils tests pass. maintenance.md: renaming section.
+- Not committed.
