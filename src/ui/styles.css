@@ -62,3 +62,19 @@ body { margin: 0; background: var(--bg); color: var(--fg);
   .info { max-height: 40vh; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
 }
+
+.bar .lock { border: 1px solid var(--line); background: none; color: inherit; font: inherit;
+  font-size: 13px; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+
+.gate { max-width: 320px; margin: 18vh auto 0; padding: 28px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 10px; }
+.gate h1 { margin: 0 0 8px; font-size: 20px; }
+.gate label { font-size: 13px; color: var(--muted); }
+.gate input[type="password"] { padding: 8px 12px; font: inherit; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--bg); color: inherit; }
+.gate .remember { display: flex; gap: 6px; align-items: center; }
+.gate button { padding: 8px; font: inherit; border: 0; border-radius: 8px; cursor: pointer;
+  background: var(--accent); color: var(--accent-fg); }
+.gate button:disabled { opacity: .6; }
+.gate-msg { margin: 0; min-height: 1.4em; font-size: 14px; }
+@media (max-width: 400px) { .gate { margin: 10vh 16px 0; } }

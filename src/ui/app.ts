@@ -28,7 +28,12 @@ export function formatDate(iso: string): string {
   });
 }
 
-export function startApp(root: HTMLElement, cfg: AppConfig): void {
+export interface AppOptions {
+  /** When set, a "Lock" button is shown that calls it. */
+  onLock?: () => void;
+}
+
+export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): void {
   let all: Photo[] = [];
   let warnings: string[] = [];
   let mode: GroupMode = (new URLSearchParams(location.hash.slice(1)).get("group") as GroupMode) || "date";
@@ -43,6 +48,11 @@ export function startApp(root: HTMLElement, cfg: AppConfig): void {
   const main = el("main", { class: "groups" });
   const header = el("header", { class: "bar" },
     el("h1", {}, "Image Viewer"), seg, search, count);
+  if (opts.onLock) {
+    const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
+    lock.addEventListener("click", opts.onLock);
+    header.append(lock);
+  }
   root.replaceChildren(header, notices, main);
 
   for (const m of MODES) {

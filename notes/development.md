@@ -38,3 +38,13 @@ Only new files are read on reruns. Place names come from OpenStreetMap Nominatim
   grouping, filter, lightbox keys, file:// error state).
 - Justified rows using width/height, virtualised grid for large collections,
   date scrubber, deep link to a photo, nicer missing-image state in the lightbox.
+
+## Password screen
+
+```sh
+cd utils && npm run set-password        # prompts; writes ../src/auth.json
+cd ../src && npm run build              # the hash is baked into index.html
+cd ../utils && npm run set-password -- --off   # remove it
+```
+
+It's a deterrent only: the data (GitHub) and images (pCloud) remain public.

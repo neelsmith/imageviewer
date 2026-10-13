@@ -73,3 +73,17 @@
   GitHub). So http://localhost:5173/ works with local, uncommitted data.
 - Noticed: catalog path `leiden-ply/IMG_1203.jpeg` doesn't match the folder
   `leiden-pliny/` in images.cex — told Neel (catalog is his file).
+
+## 2026-10-13 — session 6: password screen (option 1)
+
+- Neel chose a simple client-side password screen (a "keep out" sign; data and images
+  stay public and dev tools can bypass it). Options 2 (encrypt data) and 3 (hosted auth)
+  were described and declined.
+- `src/auth.json` holds a salted PBKDF2-SHA256 hash (600k iterations); empty hash = no
+  password screen. `utils/set-password.mjs` (`npm run set-password`, `--off`) writes it.
+- `src/lib/auth.ts` (Web Crypto check + "remember on this device" in localStorage, keyed to
+  the hash so a new password logs devices out), `src/ui/gate.ts` (form), Lock button in bar.
+- Tests: 26 Vitest + 16 node:test pass (PBKDF2 cross-checked against Python). Browser
+  smoke test with a throwaway password: wrong rejected, right unlocks (~0.3 s),
+  remembered on reload, Lock relocks, works from file:// too.
+- No password set yet — Neel runs set-password, then rebuilds.

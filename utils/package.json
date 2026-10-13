@@ -6,7 +6,8 @@
   "description": "Maintenance scripts for imageviewer (run on a machine with pCloud Drive).",
   "scripts": {
     "images-index": "node make-images-index.mjs",
-    "test": "node --test \"test/*.test.mjs\""
+    "test": "node --test \"test/*.test.mjs\"",
+    "set-password": "node set-password.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",
