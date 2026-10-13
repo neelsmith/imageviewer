@@ -1,8 +1,9 @@
 # Version info
 
 
-Current version: **1.4.0**
+Current version: **1.5.0**
 
+**1.5.0**,*Oct. 13, 2027*:  adds support for password-protected individual catalogs
 
 **1.4.0**,*Oct. 13, 2027*: 
 

@@ -8,6 +8,7 @@
     "images-index": "node make-images-index.mjs",
     "test": "node --test \"test/*.test.mjs\"",
     "set-password": "node set-password.mjs",
+    "catalog-password": "node catalog-password.mjs",
     "check-release": "node check-release.mjs",
     "thumbnails": "node make-thumbnails.mjs",
     "cull-thumbnails": "node cull-thumbnails.mjs"

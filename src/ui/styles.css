@@ -93,6 +93,9 @@ a.version:hover { text-decoration: underline; opacity: 1; }
 .gate button { padding: 8px; font: inherit; border: 0; border-radius: 8px; cursor: pointer;
   background: var(--accent); color: var(--accent-fg); }
 .gate button:disabled { opacity: .6; }
+.gate button.gate-cancel { background: none; color: inherit; border: 1px solid var(--line); }
+.catalog-menu .pw-tag { margin-left: 8px; font-size: 12px; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; vertical-align: 1px; }
 .gate-msg { margin: 0; min-height: 1.4em; font-size: 14px; }
 @media (max-width: 400px) { .gate { margin: 10vh 16px 0; } }
 
