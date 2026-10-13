@@ -20,6 +20,10 @@ describe("parseDelimited", () => {
     expect(t.errors[0]).toMatch(/line 2: expected 3 fields, found 2/);
   });
 
+  it("normalizes header spaces to underscores", () => {
+    expect(parseDelimited("Cex File|Label\na|b").headers).toEqual(["cex_file", "label"]);
+  });
+
   it("handles empty input", () => {
     expect(parseDelimited("")).toEqual({ headers: [], rows: [], errors: [] });
   });

@@ -87,3 +87,27 @@
   smoke test with a throwaway password: wrong rejected, right unlocks (~0.3 s),
   remembered on reload, Lock relocks, works from file:// too.
 - No password set yet — Neel runs set-password, then rebuilds.
+
+## 2026-10-13 — session 7: second app, catalog chooser (catalogs.html)
+
+- New entry `src/catalogs.html` + `main-catalogs.ts` + `ui/catalog-app.ts`: no password;
+  reads `data/catalog_of_catalogs.cex` (columns `cex file`/`cex_file`, `label`), shows a
+  menu of labels, loads the chosen catalog (path relative to data/), shows only cataloged
+  images (still joined with images.cex for dates/places). Catalog switcher <select> in the
+  bar; choice in URL hash (`#catalog=…&group=…`), back/forward works.
+- Shared code: `startApp` now takes `load`, `toolbar`, `localFallback` options and returns
+  `destroy()`; `buildPhotos(…, {catalogedOnly})`; new `lib/hash.ts`, `lib/catalogs.ts`;
+  CEX headers now normalize spaces to `_`.
+- Build: `npm run build` = two Vite builds → `dist/index.html` + `dist/catalogs.html`
+  (each single-file). Dev: http://localhost:5173/catalogs.html.
+- Tests: 36 Vitest pass (incl. both build outputs); browser smoke test of menu, view,
+  switching, back, deep link, broken catalog path.
+- (Correction) I had read catalog_of_catalogs.cex before Neel's edit and wrongly reported
+  a path typo. His convention: `cex_file` paths are relative to the repo root
+  (`data/catalogs/mss.cex`). `catalogUrl` now resolves against the parent of data/.
+  Verified with his real files: menu → "Photograph of manuscripts" → 1 photo, March 2019,
+  no warnings. 37 tests pass. Lesson: re-read Neel's files right before commenting on them.
+
+- docs/ test of catalogs.html failed: built app reads data from GitHub `main`, and
+  data/catalog_of_catalogs.cex was never committed (404 on main and dev). Neel to commit+push.
+  Error messages now include the URL tried.

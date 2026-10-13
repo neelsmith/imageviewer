@@ -8,7 +8,7 @@ npm install
 npm run dev          # http://localhost:5173 — reads ../data/ from the local repo
 npm test             # Vitest unit tests (lib/)
 npm run typecheck
-npm run build        # → src/dist/index.html, one self-contained file
+npm run build        # → src/dist/index.html and src/dist/catalogs.html, each self-contained
 ```
 
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
@@ -16,6 +16,17 @@ URL options: `?branch=<name>` (data from that branch of the GitHub repo, default
 
 Code layout: `build/inline-all.ts` Vite plugin that inlines JS/CSS into index.html; `lib/` pure, tested data functions (cex parser, catalog, images index, merge,
 grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + lightbox).
+
+## Two apps
+
+| Page | Data | Password |
+|---|---|---|
+| `index.html` | `data/catalog.cex` + every image in `data/images.cex` | yes (if set) |
+| `catalogs.html` | menu from `data/catalog_of_catalogs.cex` → chosen catalog, cataloged images only | no |
+
+Dev URLs: http://localhost:5173/ and http://localhost:5173/catalogs.html
+(`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
+root, e.g. `data/catalogs/mss.cex`.
 
 ## Images index (`utils/`)
 

@@ -2,6 +2,7 @@ import type { AppConfig } from "../lib/config";
 import type { Photo } from "../lib/types";
 import { filterPhotos, groupPhotos, placeLabel, type GroupMode, type PhotoGroup } from "../lib/group";
 import { buildPhotos, loadRemote, type LoadResult } from "./load";
+import { readHash, withHash } from "../lib/hash";
 
 const MODES: { mode: GroupMode; label: string }[] = [
   { mode: "date", label: "Date" },
@@ -31,12 +32,23 @@ export function formatDate(iso: string): string {
 export interface AppOptions {
   /** When set, a "Lock" button is shown that calls it. */
   onLock?: () => void;
+  /** Data loader; defaults to catalog.cex + images.cex (all images). */
+  load?: () => Promise<LoadResult>;
+  /** Extra controls placed in the top bar after the title. */
+  toolbar?: HTMLElement[];
+  /** Offer loading catalog.cex/images.cex from disk when nothing loads (default true). */
+  localFallback?: boolean;
 }
 
-export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): void {
+export interface AppHandle {
+  /** Remove global listeners and the lightbox (before starting another view). */
+  destroy(): void;
+}
+
+export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): AppHandle {
   let all: Photo[] = [];
   let warnings: string[] = [];
-  let mode: GroupMode = (new URLSearchParams(location.hash.slice(1)).get("group") as GroupMode) || "date";
+  let mode: GroupMode = (readHash(location.hash).group as GroupMode) || "date";
   if (!MODES.some((m) => m.mode === mode)) mode = "date";
   let query = "";
   let visible: Photo[] = []; // flattened order for lightbox navigation
@@ -47,7 +59,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   const notices = el("div", { class: "notices" });
   const main = el("main", { class: "groups" });
   const header = el("header", { class: "bar" },
-    el("h1", {}, "Image Viewer"), seg, search, count);
+    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, search, count);
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);
@@ -57,7 +69,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
 
   for (const m of MODES) {
     const b = el("button", { type: "button", role: "radio", "data-mode": m.mode }, m.label);
-    b.addEventListener("click", () => { mode = m.mode; history.replaceState(null, "", `#group=${mode}`); render(); });
+    b.addEventListener("click", () => { mode = m.mode; history.replaceState(null, "", withHash(location.hash, { group: mode }) || location.pathname + location.search); render(); });
     seg.append(b);
   }
   search.addEventListener("input", () => { query = search.value; render(); });
@@ -98,12 +110,13 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   prev.addEventListener("click", () => show(current - 1));
   next.addEventListener("click", () => show(current + 1));
   close.addEventListener("click", hide);
-  document.addEventListener("keydown", (e) => {
+  const onKey = (e: KeyboardEvent) => {
     if (lb.hidden) return;
     if (e.key === "Escape") hide();
     else if (e.key === "ArrowLeft") show(current - 1);
     else if (e.key === "ArrowRight") show(current + 1);
-  });
+  };
+  document.addEventListener("keydown", onKey);
 
   // ---- Rendering ----
   function tile(p: Photo, index: number) {
@@ -137,7 +150,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   function renderNotices(failed: boolean) {
     const items: Node[] = warnings.map((w) => el("li", {}, w));
     const box: Node[] = items.length ? [el("ul", {}, ...items)] : [];
-    if (failed) {
+    if (failed && opts.localFallback !== false) {
       const input = el("input", { type: "file", accept: ".cex,.txt", multiple: "" });
       input.addEventListener("change", async () => {
         const files = [...(input.files ?? [])];
@@ -161,5 +174,13 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   }
 
   main.replaceChildren(el("p", { class: "empty" }, "Loading…"));
-  loadRemote(cfg).then((r) => apply(r, r.photos.length === 0));
+  let alive = true;
+  (opts.load ?? (() => loadRemote(cfg)))().then((r) => { if (alive) apply(r, r.photos.length === 0); });
+  return {
+    destroy() {
+      alive = false;
+      document.removeEventListener("keydown", onKey);
+      lb.remove();
+    },
+  };
 }

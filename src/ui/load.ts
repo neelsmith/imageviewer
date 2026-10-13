@@ -7,7 +7,7 @@ export interface LoadResult extends MergeResult {
   warnings: string[];
 }
 
-async function fetchText(url: string): Promise<string | null> {
+export async function fetchText(url: string): Promise<string | null> {
   try {
     const r = await fetch(url, { cache: "no-cache" });
     return r.ok ? await r.text() : null;
@@ -16,19 +16,31 @@ async function fetchText(url: string): Promise<string | null> {
   }
 }
 
+export interface BuildOptions {
+  /** Keep only photos listed in the catalog (the catalog-chooser app). */
+  catalogedOnly?: boolean;
+  /** Name used for the catalog in warnings. */
+  catalogName?: string;
+}
+
 export function buildPhotos(
   catalogText: string | null,
   imagesText: string | null,
   imageBase: string,
+  opts: BuildOptions = {},
 ): LoadResult {
   const warnings: string[] = [];
+  const catName = opts.catalogName ?? "catalog.cex";
   const cat = catalogText ? parseCatalog(catalogText) : { entries: [], errors: [] };
   const idx = imagesText ? parseImagesIndex(imagesText) : { records: [], errors: [] };
-  if (catalogText === null) warnings.push("catalog.cex could not be loaded.");
+  if (catalogText === null) warnings.push(`${catName} could not be loaded.`);
   if (imagesText === null)
-    warnings.push("images.cex could not be loaded — showing cataloged images only, without dates or places.");
-  warnings.push(...cat.errors.map((e) => `catalog.cex ${e}`), ...idx.errors.map((e) => `images.cex ${e}`));
+    warnings.push(opts.catalogedOnly
+      ? "images.cex could not be loaded — dates and places are unavailable."
+      : "images.cex could not be loaded — showing cataloged images only, without dates or places.");
+  warnings.push(...cat.errors.map((e) => `${catName} ${e}`), ...idx.errors.map((e) => `images.cex ${e}`));
   const merged = mergePhotos(idx.records, cat.entries, imageBase);
+  if (opts.catalogedOnly) merged.photos = merged.photos.filter((p) => p.cataloged);
   if (merged.missingFiles.length)
     warnings.push(`${merged.missingFiles.length} cataloged image(s) not found in images.cex.`);
   return { ...merged, warnings };
@@ -40,4 +52,15 @@ export async function loadRemote(cfg: AppConfig): Promise<LoadResult> {
     fetchText(cfg.dataBase + "images.cex"),
   ]);
   return buildPhotos(catalogText, imagesText, cfg.imageBase);
+}
+
+/** Catalog-chooser app: one chosen catalog, joined with images.cex, cataloged photos only. */
+export async function loadCatalog(cfg: AppConfig, catalogFile: string, catalogUrl: string): Promise<LoadResult> {
+  const [catalogText, imagesText] = await Promise.all([
+    fetchText(catalogUrl),
+    fetchText(cfg.dataBase + "images.cex"),
+  ]);
+  const r = buildPhotos(catalogText, imagesText, cfg.imageBase, { catalogedOnly: true, catalogName: catalogFile });
+  if (catalogText === null) r.warnings[0] = `${catalogFile} could not be loaded from ${catalogUrl}`;
+  return r;
 }
