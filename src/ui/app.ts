@@ -105,7 +105,25 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   document.body.append(lb);
   let current = -1;
 
-  function show(i: number) {
+  /**
+   * The open photo is kept in the URL hash as `photo=<path>`, so every photo view has
+   * its own address. Opening from the grid adds a history entry (Back closes the photo);
+   * moving to the previous/next photo replaces it.
+   */
+  function setPhotoHash(path: string | null, push: boolean) {
+    const url = withHash(location.hash, { photo: path }) || location.pathname + location.search;
+    if (push) history.pushState({ photoView: true }, "", url);
+    else history.replaceState(history.state, "", url);
+  }
+
+  /** Open the first photo in the current view with this path; false if there is none. */
+  function openPath(path: string, how: "push" | "replace" | "none"): boolean {
+    const i = visible.findIndex((p) => p.path === path);
+    if (i >= 0) show(i, how);
+    return i >= 0;
+  }
+
+  function show(i: number, how: "push" | "replace" | "none" = "replace") {
     if (i < 0 || i >= visible.length) return;
     current = i;
     const p = visible[i];
@@ -125,8 +143,24 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     lb.hidden = false;
     viewer.reset(); // stage has a size only once visible
     close.focus();
+    if (how !== "none") setPhotoHash(p.path, how === "push");
   }
-  const hide = () => { lb.hidden = true; viewer.clear(); current = -1; };
+  const closeLightbox = () => { lb.hidden = true; viewer.clear(); current = -1; };
+  function hide() {
+    if (lb.hidden) return;
+    closeLightbox();
+    // If opening the photo added a history entry, step back over it; otherwise drop the key.
+    if (history.state?.photoView) history.back();
+    else if (readHash(location.hash).photo) setPhotoHash(null, false);
+  }
+  // Back/forward, or an edited URL: follow the photo named in the hash.
+  const onHashChange = () => {
+    const path = readHash(location.hash).photo;
+    if (!path) { if (!lb.hidden) closeLightbox(); return; }
+    if (current >= 0 && visible[current]?.path === path) return;
+    openPath(path, "none");
+  };
+  window.addEventListener("hashchange", onHashChange);
   prev.addEventListener("click", () => show(current - 1));
   next.addEventListener("click", () => show(current + 1));
   close.addEventListener("click", hide);
@@ -150,7 +184,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       if (triedOriginal) b.classList.add("broken");
       else { triedOriginal = true; img.src = p.url; }
     });
-    b.addEventListener("click", () => show(index));
+    b.addEventListener("click", () => show(index, "push"));
     return b;
   }
 
@@ -198,8 +232,17 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   function apply(r: LoadResult, failed: boolean) {
     all = r.photos;
     warnings = r.warnings;
-    renderNotices(failed);
     render();
+    // A link to a single photo (#photo=<path>) opens it once the photos are loaded.
+    const wanted = readHash(location.hash).photo;
+    if (wanted && !openPath(wanted, "none")) {
+      const hiddenUncataloged = catalogedOnly && all.some((p) => p.path === wanted);
+      warnings = [...warnings, hiddenUncataloged
+        ? `Photo “${wanted}” is not cataloged. Untick “Cataloged images only” to see it.`
+        : `Photo “${wanted}” was not found.`];
+      setPhotoHash(null, false);
+    }
+    renderNotices(failed);
   }
 
   main.replaceChildren(el("p", { class: "empty" }, "Loading…"));
@@ -209,6 +252,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     destroy() {
       alive = false;
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("hashchange", onHashChange);
       lb.remove();
     },
   };

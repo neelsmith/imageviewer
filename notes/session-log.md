@@ -180,3 +180,15 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - Browser check: thumbnail 24 KB vs original 765 KB; missing thumbnail falls back; placeholder
   then original swap with zoom preserved.
 - Neel to run `npm install` in utils/ (adds sharp) then `npm run thumbnails`. Not released.
+
+## 2026-10-13 — session 13: a URL for each photo (both apps)
+
+- Open photo is kept in the hash as `photo=<path>` (alongside catalog/group/all). Opening
+  from the grid pushes a history entry (Back closes the photo); prev/next/swipe replace it;
+  Close/Esc steps back (or drops the key for a deep link). hashchange follows back/forward
+  and edited URLs. A link opens its photo after loading; if the photo is hidden by
+  "Cataloged images only" or missing, a notice explains and the key is dropped.
+  Catalog switcher/menu clears `photo`. Changes in ui/app.ts, ui/catalog-app.ts.
+- 4 new jsdom tests; 57 Vitest pass, typecheck clean. Headless Chromium on the built
+  index.html with real data from GitHub main: deep link, close, tile, Back, Forward, Esc OK.
+- Not committed or released (app change → next version bump).

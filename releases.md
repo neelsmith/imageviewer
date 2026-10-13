@@ -3,7 +3,10 @@
 
 Current version: **1.2.0**
 
-**1.3.0**, *??*: add thumbnails for lightbox viewing to cut down on traffic from pCloud.
+**1.3.0**, *??*: 
+
+- adds utility to create thumbnails, and uses those for lightbox viewing to cut down on traffic from pCloud.
+- makes individual images addressable/bookmarkable by URL
 
 
 **1.2.0**, *Oct. 13, 2026*: adds +/- zoom on individual images.

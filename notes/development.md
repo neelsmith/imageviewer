@@ -13,6 +13,8 @@ npm run build        # → src/dist/index.html and src/dist/private.html, each s
 
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
 `?data=<dir URL>`, `?images=<base URL>`, `#group=date|location|tag`.
+Hash keys (combine with `&`): `catalog=<cex_file>` (index.html), `all=1` (private.html),
+`photo=<path>` — opens that photo, e.g. `index.html#catalog=data%2Fcatalogs%2Fmss.cex&photo=leiden-pliny%2FIMG_1203.jpeg`.
 
 Single-photo view zoom: `lib/zoom.ts` (pure math, tested) + `ui/zoom-viewer.ts` (wheel/trackpad
 pinch incl. Safari gesture events, drag, touch pinch/swipe/double-tap, dblclick, +/−/0 keys,

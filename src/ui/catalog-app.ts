@@ -8,7 +8,8 @@ import { fetchText, loadCatalog } from "./load";
 /**
  * Catalog-chooser app: lists the catalogs in data/catalog_of_catalogs.cex by label,
  * then shows only the images in the chosen catalog. The choice lives in the URL
- * hash (#catalog=<cex_file>) so views can be bookmarked.
+ * hash (#catalog=<cex_file>) so views can be bookmarked; an open photo adds
+ * `&photo=<path>` (see startApp).
  */
 export async function startCatalogApp(root: HTMLElement, cfg: AppConfig): Promise<void> {
   root.replaceChildren(message("Loading catalogs…"));
@@ -42,8 +43,8 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig): Promis
   }
 
   function choose(c: CatalogChoice | null) {
-    // Keep the grouping choice; changing the hash triggers route().
-    location.hash = withHash(location.hash, { catalog: c ? c.file : null }) || "#";
+    // Keep the grouping choice, drop any open photo; changing the hash triggers route().
+    location.hash = withHash(location.hash, { catalog: c ? c.file : null, photo: null }) || "#";
   }
 
   function showMenu() {
