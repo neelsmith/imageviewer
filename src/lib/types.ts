@@ -4,6 +4,10 @@ export interface CatalogEntry {
   credits: string;
   license: string;
   tags: string[];
+  /** Optional `year` column (free text, e.g. "1986"); "" if absent. */
+  year: string;
+  /** Optional `place` column (e.g. "Priene"); "" if absent. Not the EXIF-derived Photo.place. */
+  placeName: string;
 }
 
 export interface Place {
@@ -33,6 +37,10 @@ export interface Photo {
   credits: string;
   license: string;
   tags: string[];
+  /** Catalog `year` column; "" if none. */
+  year: string;
+  /** Catalog `place` column; "" if none. */
+  placeName: string;
   date: string;
   lat: number | null;
   lon: number | null;

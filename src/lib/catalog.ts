@@ -34,6 +34,9 @@ export function parseCatalog(text: string): { entries: CatalogEntry[]; errors: s
       credits: r.credits ?? "",
       license: r.license ?? "",
       tags: splitTags(r.tags ?? ""),
+      // Optional columns.
+      year: r.year ?? "",
+      placeName: r.place ?? "",
     });
   }
   return { entries, errors };

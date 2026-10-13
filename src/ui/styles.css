@@ -96,8 +96,10 @@ a.version:hover { text-decoration: underline; opacity: 1; }
 .gate-msg { margin: 0; min-height: 1.4em; font-size: 14px; }
 @media (max-width: 400px) { .gate { margin: 10vh 16px 0; } }
 
-.catalog-select { font: inherit; padding: 5px 10px; border: 1px solid var(--line);
+.catalog-select, .facet-select { font: inherit; padding: 5px 10px; border: 1px solid var(--line);
   border-radius: 999px; background: var(--bg); color: inherit; max-width: 260px; }
+.facet-select { max-width: 180px; }
+.facet-select[hidden] { display: none; }
 .catalog-menu { max-width: 560px; margin: 12vh auto 0; padding: 0 16px; }
 .catalog-menu h1 { font-size: 22px; margin: 0 0 4px; }
 .catalog-menu p { color: var(--muted); margin: 0 0 16px; }

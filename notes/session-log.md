@@ -201,3 +201,18 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   Non-.jpg files in _thumbs/ are reported and left alone. Refuses to delete when the root
   has no images. 4 node:test tests; 28 utils tests pass. maintenance.md: renaming section.
 - Not committed.
+
+## 2026-10-13 — session 15: optional `year` / `place` catalog columns
+
+- Neel added `year|place` to data/catalog.cex (uncommitted). Parsed into CatalogEntry/Photo
+  as `year` and `placeName` (not `place`, which is the EXIF Place object).
+- Both apps: Year / Place <select>s in the bar (lib/group.ts facetValues + selectPhotos
+  year/place), hidden when no photo has a value; numeric-aware sort; state in hash
+  (`year=`, `place=`), unknown values from a URL dropped; catalog switch clears them.
+  Text filter also searches year/place. Photo view shows Year and Place; the EXIF place row
+  is labelled "Location" when the catalog also gives a place.
+- 64 Vitest pass, typecheck clean. Neel's src/node_modules now has macOS binaries, so checks
+  ran on a scratch copy outside the repo. Browser check (built index.html, real data/ files
+  served locally): drop-downs, filtering, reload, catalog switch, photo info all OK.
+- Open question for Neel: use catalog `year` for Date grouping when a photo has no EXIF date?
+- Not committed; app change → version bump before release.

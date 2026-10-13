@@ -1,10 +1,14 @@
 # Version info
 
 
-Current version: **1.3.0**
+Current version: **1.4.0**
 
 
-**1.3.1**,*?*: adds utility to cull obsolete thumbnails.
+**1.4.0**,*Oct. 13, 2027*: 
+
+- adds utility to cull obsolete thumbnails.
+- allows optional `year` and `place` columns in catalogs
+- allows filtering by `year` and `place` if included in catalog
 
 **1.3.0**, *Oct. 13, 2026*: 
 

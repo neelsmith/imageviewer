@@ -6,7 +6,7 @@ const rec = (path: string, extra: Partial<ImageRecord> = {}): ImageRecord => ({
   path, date: "", lat: null, lon: null, place: null, width: null, height: null, ...extra,
 });
 const cat = (path: string, extra: Partial<CatalogEntry> = {}): CatalogEntry => ({
-  path, caption: "", credits: "", license: "", tags: [], ...extra,
+  path, caption: "", credits: "", license: "", tags: [], year: "", placeName: "", ...extra,
 });
 
 describe("mergePhotos", () => {
