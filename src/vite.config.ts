@@ -1,19 +1,26 @@
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vitest/config";
 import { inlineAll } from "./build/inline-all";
 import { serveData } from "./build/serve-data";
 
+// The app version lives in package.json ("version") and is baked into both pages.
+const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+
 // Two single-file apps, built one at a time so each is fully self-contained:
-//   vite build                 → dist/index.html     (all images, password screen)
-//   vite build --mode catalogs → dist/catalogs.html  (catalog chooser, cataloged images only)
-// In `npm run dev` both are served: /index.html and /catalogs.html.
-export default defineConfig(({ mode }) => {
-  const catalogs = mode === "catalogs";
+//   vite build                → dist/index.html    (catalog chooser, cataloged images only)
+//   vite build --mode private → dist/private.html  (all images, password screen)
+// In `npm run dev` both are served: / and /private.html.
+export default defineConfig(({ mode, command }) => {
+  const isPrivate = mode === "private";
   return {
     plugins: [inlineAll(), serveData("../data")],
+    define: {
+      __APP_VERSION__: JSON.stringify(command === "serve" ? `${version}-dev` : version),
+    },
     build: {
       outDir: "dist",
-      emptyOutDir: !catalogs, // second build must not delete index.html
-      rollupOptions: { input: catalogs ? "catalogs.html" : "index.html" },
+      emptyOutDir: !isPrivate, // second build must not delete index.html
+      rollupOptions: { input: isPrivate ? "private.html" : "index.html" },
     },
     test: {
       environment: "jsdom",

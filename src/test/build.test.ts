@@ -4,6 +4,7 @@ import { build } from "vite";
 import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import pkg from "../package.json";
 
 const selfContained = (html: string) => {
   expect(html).not.toMatch(/<script\b[^>]*\bsrc=/);
@@ -13,22 +14,29 @@ const selfContained = (html: string) => {
 };
 
 describe("production build", () => {
-  it("emits two self-contained pages: index.html (password) and catalogs.html (no password)", async () => {
+  it("emits two self-contained pages: index.html (catalogs, no password) and private.html (password)", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "iv-build-"));
     const common = { root: resolve(__dirname, ".."), configFile: resolve(__dirname, "../vite.config.ts"),
       logLevel: "silent" as const };
     await build({ ...common, build: { outDir, emptyOutDir: true } });
-    await build({ ...common, mode: "catalogs", build: { outDir, emptyOutDir: false } });
-    expect((await readdir(outDir)).sort()).toEqual(["catalogs.html", "index.html"]);
+    await build({ ...common, mode: "private", build: { outDir, emptyOutDir: false } });
+    expect((await readdir(outDir)).sort()).toEqual(["index.html", "private.html"]);
+
+    const priv = await readFile(join(outDir, "private.html"), "utf8");
+    selfContained(priv);
+    expect(priv).toContain("Remember on this device");
+    expect(priv).not.toContain("catalog_of_catalogs.cex");
 
     const index = await readFile(join(outDir, "index.html"), "utf8");
     selfContained(index);
-    expect(index).toContain("Remember on this device");
-    expect(index).not.toContain("catalog_of_catalogs.cex");
+    expect(index).toContain("catalog_of_catalogs.cex");
+    expect(index).not.toContain("Remember on this device");
 
-    const catalogs = await readFile(join(outDir, "catalogs.html"), "utf8");
-    selfContained(catalogs);
-    expect(catalogs).toContain("catalog_of_catalogs.cex");
-    expect(catalogs).not.toContain("Remember on this device");
+    // Release version (no "-dev") is baked into both pages.
+    for (const html of [index, priv]) {
+      // The minifier may quote it with ", ' or `.
+      expect(html).toMatch(new RegExp(`["'\`]${pkg.version.replace(/\./g, "\\.")}["'\`]`));
+      expect(html).not.toContain(`${pkg.version}-dev`);
+    }
   }, 60_000);
 });

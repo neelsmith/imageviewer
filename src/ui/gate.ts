@@ -1,3 +1,4 @@
+import { versionLabel } from "../lib/version";
 import { checkPassword, isAuthEnabled, isRemembered, remember, type AuthConfig } from "../lib/auth";
 
 /** Resolves once the viewer has entered the right password (or none is set). */
@@ -17,6 +18,7 @@ export function passwordGate(root: HTMLElement, cfg: AuthConfig): Promise<void> 
     const keep = form.querySelector<HTMLInputElement>(".remember input")!;
     const button = form.querySelector("button")!;
     const msg = form.querySelector<HTMLElement>(".gate-msg")!;
+    form.append(versionLabel());
     root.replaceChildren(form);
     input.focus();
 
