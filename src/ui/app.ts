@@ -4,6 +4,7 @@ import { groupPhotos, selectPhotos, placeLabel, type GroupMode, type PhotoGroup 
 import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
 import { versionLabel } from "../lib/version";
+import { ZoomViewer } from "./zoom-viewer";
 
 const MODES: { mode: GroupMode; label: string }[] = [
   { mode: "date", label: "Date" },
@@ -94,13 +95,13 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   search.addEventListener("input", () => { query = search.value; render(); });
 
   // ---- Lightbox ----
-  const lbImg = el("img", { alt: "" });
+  const viewer = new ZoomViewer({ onSwipe: (dir) => show(current + dir) });
   const lbInfo = el("aside", { class: "info" });
   const prev = el("button", { class: "nav prev", "aria-label": "Previous" }, "‹");
   const next = el("button", { class: "nav next", "aria-label": "Next" }, "›");
   const close = el("button", { class: "close", "aria-label": "Close" }, "×");
   const lb = el("div", { class: "lightbox", hidden: "", role: "dialog", "aria-modal": "true" },
-    el("div", { class: "stage" }, lbImg, prev, next, close), lbInfo);
+    el("div", { class: "stage" }, viewer.el, prev, next, close, viewer.controls), lbInfo);
   document.body.append(lb);
   let current = -1;
 
@@ -108,8 +109,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     if (i < 0 || i >= visible.length) return;
     current = i;
     const p = visible[i];
-    lbImg.src = p.url;
-    lbImg.alt = p.caption || p.path;
+    viewer.load(p.url, p.caption || p.path, p.width && p.height ? { w: p.width, h: p.height } : null);
     const rows: [string, string][] = [
       ["Caption", p.caption], ["Date", p.date ? formatDate(p.date) : ""],
       ["Place", p.place ? placeLabel(p.place) : ""], ["Tags", p.tags.join(", ")],
@@ -123,9 +123,10 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     prev.disabled = i === 0;
     next.disabled = i === visible.length - 1;
     lb.hidden = false;
+    viewer.reset(); // stage has a size only once visible
     close.focus();
   }
-  const hide = () => { lb.hidden = true; lbImg.removeAttribute("src"); current = -1; };
+  const hide = () => { lb.hidden = true; viewer.clear(); current = -1; };
   prev.addEventListener("click", () => show(current - 1));
   next.addEventListener("click", () => show(current + 1));
   close.addEventListener("click", hide);
@@ -134,6 +135,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     if (e.key === "Escape") hide();
     else if (e.key === "ArrowLeft") show(current - 1);
     else if (e.key === "ArrowRight") show(current + 1);
+    else if (viewer.handleKey(e)) e.preventDefault();
   };
   document.addEventListener("keydown", onKey);
 

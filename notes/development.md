@@ -14,6 +14,10 @@ npm run build        # → src/dist/index.html and src/dist/private.html, each s
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
 `?data=<dir URL>`, `?images=<base URL>`, `#group=date|location|tag`.
 
+Single-photo view zoom: `lib/zoom.ts` (pure math, tested) + `ui/zoom-viewer.ts` (wheel/trackpad
+pinch incl. Safari gesture events, drag, touch pinch/swipe/double-tap, dblclick, +/−/0 keys,
+on-screen controls). Zoom range: fit … 400% of natural size; resets on each new photo.
+
 Code layout: `build/inline-all.ts` Vite plugin that inlines JS/CSS into index.html; `lib/` pure, tested data functions (cex parser, catalog, images index, merge,
 grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + lightbox).
 

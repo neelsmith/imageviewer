@@ -138,3 +138,17 @@
   ↔ 685 total, state survives reload.
 - Not released: app code changed since v1.0.0, so the next release needs a version bump
   (suggested 1.1.0) — Neel's call.
+
+## 2026-10-13 — session 10: zoom in the single-photo view (both apps)
+
+- Neel had released v1.1.0 (toggle). Added zoom/pan to the full-screen photo view:
+  `lib/zoom.ts` (fit/clamp/zoom-around-point/toggle/wheel math; 7 tests) and
+  `ui/zoom-viewer.ts`. Image is drawn at natural size with a CSS transform; uses
+  images.cex width/height to lay out before load. Arrow keys still change photo; touch
+  swipe changes photo only when not zoomed. Lightbox buttons now dark-translucent so they
+  show on light photos.
+- 51 Vitest pass. Headless Chromium check with a 4032×3024 test image: wheel zoom toward
+  pointer, clamps (fit … 400%), dblclick fit↔100%, drag pan with edge clamp, +/−/0, buttons
+  enable/disable, reset on next photo, refit on resize; mobile emulation: swipe → next,
+  pinch zoom, double-tap → 100%. Works in index.html and private.html.
+- Not tested: real Safari trackpad gestures, real iOS/Android devices. Next release: 1.2.0?
