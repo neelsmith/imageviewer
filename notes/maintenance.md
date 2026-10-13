@@ -32,3 +32,16 @@ Neither task needs a rebuild or a release. The apps read `data/` from GitHub's `
    `npm run cull-thumbnails -- --delete` removes them (and any `_thumbs/` folders left empty).
    It refuses to delete anything if it finds no images at all (wrong `--root`, pCloud not mounted).
 5. Commit `data/images.cex` (and catalog changes), push to `main`.
+
+## Private catalogs (private-catalogs.html)
+
+1. Put the catalog file anywhere under `data/` (e.g. `data/private/brunswick.cex`, same format
+   as other catalogs) and add a row to `data/catalog_of_private_catalogs.cex`: `cex_file|label`.
+2. Password: `cd utils && npm run catalog-password -- data/private/brunswick.cex`
+   (prompts twice; writes a salted hash into the list's `password` column, adding the column
+   if needed). `-- <cex_file> --off` removes it. A blank cell = no password.
+3. Commit and push the list (and the catalog). No rebuild or release needed.
+   Changing a password logs out devices that remembered the old one; "Lock" in the app
+   forgets it on that device.
+4. A "keep out" sign only: the catalog files and images are public (anyone can read them on
+   GitHub), so don't put anything here that must stay secret.

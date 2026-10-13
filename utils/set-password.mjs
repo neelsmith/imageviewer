@@ -24,7 +24,7 @@ export function makeAuthConfig(password, iterations = ITERATIONS) {
   return { algorithm: "PBKDF2-SHA256", iterations, salt, hash: hashPassword(password, salt, iterations) };
 }
 
-function askHidden(question) {
+export function askHidden(question) {
   return new Promise((resolve) => {
     const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
     rl._writeToOutput = (s) => { if (s.includes(question)) process.stdout.write(s); };

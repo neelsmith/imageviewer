@@ -5,10 +5,10 @@
 ```sh
 cd src
 npm install
-npm run dev          # http://localhost:5173 (+ /private.html) — reads ../data/ from the local repo
+npm run dev          # http://localhost:5173 (+ /private.html, /private-catalogs.html) — reads ../data/ from the local repo
 npm test             # Vitest unit tests (lib/)
 npm run typecheck
-npm run build        # → src/dist/index.html and src/dist/private.html, each self-contained
+npm run build        # → src/dist/index.html, private.html, private-catalogs.html, each self-contained
 ```
 
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
@@ -29,8 +29,9 @@ grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + light
 |---|---|---|
 | `index.html` (source `src/index.html`, `main-catalogs.ts`) | menu from `data/catalog_of_catalogs.cex` → chosen catalog, cataloged images only | no |
 | `private.html` (source `src/private.html`, `main-private.ts`) | `data/catalog.cex` + every image in `data/images.cex`; "Cataloged images only" toggle (default on; off = `#all=1`) | yes (if set) |
+| `private-catalogs.html` (source `src/private-catalogs.html`, `main-private-catalogs.ts`) | menu from `data/catalog_of_private_catalogs.cex`; the chosen catalog's images (same view as index.html) | per catalog, from the list's optional `password` column |
 
-Dev URLs: http://localhost:5173/ and http://localhost:5173/private.html
+Dev URLs: http://localhost:5173/, /private.html and /private-catalogs.html
 (`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
 root, e.g. `data/catalogs/mss.cex`.
 
@@ -79,9 +80,9 @@ bakes it into both pages, shown as a small "vX.Y.Z" link to the GitHub release; 
 shows "vX.Y.Z-dev". Data updates (catalogs, images.cex) are not releases.
 
 1. Bump `"version"` in `src/package.json`; add notes to `releases.md` (Neel's file).
-2. `cd src && npm run build`, copy `dist/index.html` and `dist/private.html` to `docs/`.
+2. `cd src && npm run build`, copy `dist/index.html`, `dist/private.html` and `dist/private-catalogs.html` to `docs/`.
 3. `cd ../utils && npm run check-release` (tag defaults to v + package.json version) — checks tag format, match with
    package.json, tag not already used, and that docs/index.html embeds this version
-   (private.html isn't checked — it may live anywhere under docs/).
+   (private.html and private-catalogs.html aren't checked — they may live anywhere under docs/).
 4. Commit, then `git tag -a vX.Y.Z -m "Release vX.Y.Z"` and `git push --follow-tags`.
 5. Optional: GitHub → Releases → draft from the tag, attach the two HTML files.

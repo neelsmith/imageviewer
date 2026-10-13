@@ -14,6 +14,19 @@ export interface AuthConfig {
 
 export const isAuthEnabled = (cfg: AuthConfig): boolean => cfg.hash.trim() !== "";
 
+/**
+ * Per-catalog passwords are written into a catalog list's `password` column by
+ * utils/catalog-password.mjs as `pbkdf2-sha256:<iterations>:<salt b64>:<hash b64>`.
+ * Returns null for a blank cell (no password); throws for anything malformed.
+ */
+export function parseAuthSpec(spec: string): AuthConfig | null {
+  const s = spec.trim();
+  if (!s) return null;
+  const m = /^pbkdf2-sha256:(\d+):([A-Za-z0-9+/=]+):([A-Za-z0-9+/=]+)$/.exec(s);
+  if (!m) throw new Error("password value isn't in the form written by npm run catalog-password");
+  return { algorithm: "PBKDF2-SHA256", iterations: Number(m[1]), salt: m[2], hash: m[3] };
+}
+
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 const toB64 = (b: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(b)));
 
@@ -31,16 +44,20 @@ export async function checkPassword(password: string, cfg: AuthConfig): Promise<
 }
 
 // "Remember me": store the hash itself, so changing the password logs everyone out.
+// private.html uses KEY; each password-protected catalog has its own key (catalogKey).
 const KEY = "imageviewer.unlocked";
 
-export function isRemembered(cfg: AuthConfig, storage: Pick<Storage, "getItem"> | null = safeStorage()): boolean {
-  try { return storage?.getItem(KEY) === cfg.hash; } catch { return false; }
+/** Storage key for "remember on this device" for one catalog file. */
+export const catalogKey = (file: string): string => `${KEY}.catalog:${file}`;
+
+export function isRemembered(cfg: AuthConfig, storage: Pick<Storage, "getItem"> | null = safeStorage(), key = KEY): boolean {
+  try { return storage?.getItem(key) === cfg.hash; } catch { return false; }
 }
-export function remember(cfg: AuthConfig, storage: Pick<Storage, "setItem"> | null = safeStorage()): void {
-  try { storage?.setItem(KEY, cfg.hash); } catch { /* private mode etc. */ }
+export function remember(cfg: AuthConfig, storage: Pick<Storage, "setItem"> | null = safeStorage(), key = KEY): void {
+  try { storage?.setItem(key, cfg.hash); } catch { /* private mode etc. */ }
 }
-export function forget(storage: Pick<Storage, "removeItem"> | null = safeStorage()): void {
-  try { storage?.removeItem(KEY); } catch { /* ignore */ }
+export function forget(storage: Pick<Storage, "removeItem"> | null = safeStorage(), key = KEY): void {
+  try { storage?.removeItem(key); } catch { /* ignore */ }
 }
 function safeStorage(): Storage | null {
   try { return globalThis.localStorage ?? null; } catch { return null; }

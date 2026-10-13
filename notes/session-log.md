@@ -216,3 +216,22 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   served locally): drop-downs, filtering, reload, catalog switch, photo info all OK.
 - Open question for Neel: use catalog `year` for Date grouping when a photo has no EXIF date?
 - Not committed; app change → version bump before release.
+
+## 2026-10-13 — session 16: third app, private-catalogs.html (password per catalog)
+
+- Neel chose the simple per-catalog "keep out" password (no encryption). New entry
+  src/private-catalogs.html + main-private-catalogs.ts; build mode `private-catalogs`
+  (`npm run build` now makes 3 pages). startCatalogApp takes `{ listFile }`.
+- Catalog lists may have an optional `password` column: `pbkdf2-sha256:<iter>:<salt>:<hash>`
+  (lib/auth.ts parseAuthSpec; malformed → catalog left out with a message). Choosing a
+  locked catalog shows the gate (title = label, "Back to catalogs"); remembered per catalog
+  under `imageviewer.unlocked.catalog:<file>`; Lock button forgets. Menu marks "password".
+  Works in index.html too if its list ever gets the column.
+- utils/catalog-password.mjs (`npm run catalog-password -- <cex_file> [--off] [--list f]`),
+  reuses set-password's hash + hidden prompt (askHidden now exported).
+- Tests: 73 Vitest (5 new UI flow in test/private-catalogs.test.ts, + auth/catalogs/build),
+  33 utils node:test. Browser check of built page with a real 600k-iteration hash and
+  data/private/brunswick.cex: menu, wrong/right password (~0.25 s), remember, Lock, Back.
+- Neel's data/catalog_of_private_catalogs.cex and data/private/ are untracked — need commit
+  + push before the built app (reads GitHub main) can see them. No password set on them yet.
+- Not committed; app change → version bump before release.
