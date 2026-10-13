@@ -24,7 +24,9 @@ body { margin: 0; background: var(--bg); color: var(--fg);
 .count { color: var(--muted); font-size: 13px; margin-left: auto; }
 .version { color: var(--muted); font-size: 12px; text-decoration: none; opacity: .8; }
 a.version:hover { text-decoration: underline; opacity: 1; }
-.gate .version, .catalog-menu .version { justify-self: end; display: block; margin-top: 16px; text-align: right; }
+.gate .versions, .catalog-menu .versions { justify-self: end; display: block; margin-top: 16px; text-align: right; }
+.versions { white-space: nowrap; }
+.data-updated[hidden] { display: none; }
 
 .notices { margin: 12px 16px 0; padding: 10px 14px; background: var(--warn); border-radius: 8px; font-size: 14px; }
 .notices ul { margin: 0; padding-left: 18px; }

@@ -235,3 +235,16 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - Neel's data/catalog_of_private_catalogs.cex and data/private/ are untracked — need commit
   + push before the built app (reads GitHub main) can see them. No password set on them yet.
 - Not committed; app change → version bump before release.
+
+## 2026-10-13 — session 17: manual data "last updated" date
+
+- Neel wants a hand-set date for the data, separate from the app version (he declined
+  tags/automation; first asked for a free-text version, then switched to a date mid-task).
+- `data/last-updated.txt` (YYYY-MM-DD; first non-comment line) is fetched at startup by all
+  three mains (ui/load.ts loadDataUpdated) and shown via lib/version.ts versionInfo() as
+  "v1.5.0 · data updated Oct 13, 2026" in the bar, catalog menus and password screens.
+  Invalid/missing → hidden (console warning if invalid). Labels created before it loads are
+  updated in place.
+- 77 Vitest pass, typecheck clean. Browser check of all three built pages: date shown;
+  invalid text and missing file → app version only.
+- No data/last-updated.txt created (Neel sets it). Not committed; app change → version bump.

@@ -4,6 +4,11 @@ None of these tasks needs a rebuild or a release, except changing the `private.h
 (or `?branch=…`); changes appear within ~5 minutes of pushing. Preview locally with
 `cd src && npm run dev`.
 
+**Data "last updated" date:** when you update catalogs or images, set the date in
+`data/last-updated.txt` by hand (one line, `YYYY-MM-DD`, e.g. `2026-10-13`; `//` or `#` lines
+are ignored) and commit it with the data. All three apps show it next to the app version as
+"v1.5.0 · data updated Oct 13, 2026". No file, or not a valid date → only the app version shows.
+
 ## Updating a catalog
 
 1. Edit the `.cex` file in `data/`. `path` values are relative to the pCloud Public Folder,

@@ -1,4 +1,4 @@
-import { versionLabel } from "../lib/version";
+import { versionInfo } from "../lib/version";
 import { checkPassword, isAuthEnabled, isRemembered, remember, type AuthConfig } from "../lib/auth";
 
 export interface GateOptions {
@@ -39,7 +39,7 @@ export function passwordGate(root: HTMLElement, cfg: AuthConfig, opts: GateOptio
       cancel.addEventListener("click", () => resolve(false));
       button.after(cancel);
     }
-    form.append(versionLabel());
+    form.append(versionInfo());
     root.replaceChildren(form);
     input.focus();
 

@@ -1,7 +1,10 @@
 # Version info
 
 
-Current version: **1.5.0**
+Current version: **1.6.0**
+
+**1.6.0**,*Oct. 13, 2027*:  apps separately track software version number and last modified date for data.
+
 
 **1.5.0**,*Oct. 13, 2027*:  adds support for password-protected individual catalogs
 
