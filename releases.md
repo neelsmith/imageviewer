@@ -3,6 +3,9 @@
 
 Current version: **1.3.0**
 
+
+**1.3.1**,*?*: adds utility to cull obsolete thumbnails.
+
 **1.3.0**, *Oct. 13, 2026*: 
 
 - adds utility to create thumbnails, and uses those for lightbox viewing to cut down on traffic from pCloud.
