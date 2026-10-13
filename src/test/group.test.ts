@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupPhotos, filterPhotos } from "../lib/group";
+import { groupPhotos, filterPhotos, selectPhotos } from "../lib/group";
 import type { Photo } from "../lib/types";
 
 const photo = (path: string, extra: Partial<Photo> = {}): Photo => ({
@@ -52,5 +52,14 @@ describe("filterPhotos", () => {
     expect(filterPhotos(PHOTOS, "pliny leiden").map((p) => p.path)).toEqual(["a.jpg"]);
     expect(filterPhotos(PHOTOS, "NETHERLANDS").map((p) => p.path)).toEqual(["a.jpg", "c.jpg"]);
     expect(filterPhotos(PHOTOS, "  ")).toHaveLength(4);
+  });
+});
+
+describe("selectPhotos", () => {
+  const mixed = [photo("a.jpg", { cataloged: true, caption: "Pliny" }), photo("b.jpg"), photo("c.jpg", { cataloged: true })];
+  it("keeps only cataloged photos when asked, then applies the filter", () => {
+    expect(selectPhotos(mixed, { catalogedOnly: true, query: "" }).map((p) => p.path)).toEqual(["a.jpg", "c.jpg"]);
+    expect(selectPhotos(mixed, { catalogedOnly: false, query: "" })).toHaveLength(3);
+    expect(selectPhotos(mixed, { catalogedOnly: true, query: "pliny" }).map((p) => p.path)).toEqual(["a.jpg"]);
   });
 });

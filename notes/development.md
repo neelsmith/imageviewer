@@ -22,7 +22,7 @@ grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + light
 | Page | Data | Password |
 |---|---|---|
 | `index.html` (source `src/index.html`, `main-catalogs.ts`) | menu from `data/catalog_of_catalogs.cex` → chosen catalog, cataloged images only | no |
-| `private.html` (source `src/private.html`, `main-private.ts`) | `data/catalog.cex` + every image in `data/images.cex` | yes (if set) |
+| `private.html` (source `src/private.html`, `main-private.ts`) | `data/catalog.cex` + every image in `data/images.cex`; "Cataloged images only" toggle (default on; off = `#all=1`) | yes (if set) |
 
 Dev URLs: http://localhost:5173/ and http://localhost:5173/private.html
 (`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
