@@ -1,0 +1,16 @@
+{
+  "name": "imageviewer-utils",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Maintenance scripts for imageviewer (run on a machine with pCloud Drive).",
+  "scripts": {
+    "images-index": "node make-images-index.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "set-password": "node set-password.mjs"
+  },
+  "dependencies": {
+    "exifr": "^7.1.3",
+    "image-size": "^2.0.4"
+  }
+}
