@@ -109,7 +109,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     if (i < 0 || i >= visible.length) return;
     current = i;
     const p = visible[i];
-    viewer.load(p.url, p.caption || p.path, p.width && p.height ? { w: p.width, h: p.height } : null);
+    viewer.load(p.url, p.caption || p.path, p.width && p.height ? { w: p.width, h: p.height } : null, p.thumb);
     const rows: [string, string][] = [
       ["Caption", p.caption], ["Date", p.date ? formatDate(p.date) : ""],
       ["Place", p.place ? placeLabel(p.place) : ""], ["Tags", p.tags.join(", ")],
@@ -141,10 +141,15 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
 
   // ---- Rendering ----
   function tile(p: Photo, index: number) {
-    const img = el("img", { src: p.url, alt: p.caption || p.path, loading: "lazy", decoding: "async" });
+    // Thumbnail first; if there isn't one yet, fall back to the full-size original.
+    const img = el("img", { src: p.thumb, alt: p.caption || p.path, loading: "lazy", decoding: "async" });
     const b = el("button", { class: "tile", type: "button", title: p.caption || p.path }, img);
     if (!p.cataloged) b.classList.add("uncataloged");
-    img.addEventListener("error", () => b.classList.add("broken"), { once: true });
+    let triedOriginal = false;
+    img.addEventListener("error", () => {
+      if (triedOriginal) b.classList.add("broken");
+      else { triedOriginal = true; img.src = p.url; }
+    });
     b.addEventListener("click", () => show(index));
     return b;
   }

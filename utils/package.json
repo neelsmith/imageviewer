@@ -8,10 +8,12 @@
     "images-index": "node make-images-index.mjs",
     "test": "node --test \"test/*.test.mjs\"",
     "set-password": "node set-password.mjs",
-    "check-release": "node check-release.mjs"
+    "check-release": "node check-release.mjs",
+    "thumbnails": "node make-thumbnails.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",
-    "image-size": "^2.0.4"
+    "image-size": "^2.0.4",
+    "sharp": "^0.35.5"
   }
 }

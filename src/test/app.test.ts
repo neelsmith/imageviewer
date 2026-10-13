@@ -51,3 +51,22 @@ describe("Cataloged images only toggle", () => {
     expect(tiles(root)).toBe(3);
   });
 });
+
+describe("grid thumbnails", () => {
+  it("loads the thumbnail, falls back to the original, then marks the tile broken", async () => {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", "/");
+    const root = document.createElement("div");
+    document.body.append(root);
+    startApp(root, cfg, { load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
+    await flush();
+    const tile = root.querySelector<HTMLElement>(".tile")!;
+    const img = tile.querySelector("img")!;
+    expect(img.src).toMatch(/^https:\/\/h\/_thumbs\/.+\.jpg\.jpg$|^https:\/\/h\/_thumbs\/.+\.jpg$/);
+    img.dispatchEvent(new Event("error"));
+    expect(img.src).toMatch(/^https:\/\/h\/[abc]\.jpg$/);
+    expect(tile.classList.contains("broken")).toBe(false);
+    img.dispatchEvent(new Event("error"));
+    expect(tile.classList.contains("broken")).toBe(true);
+  });
+});

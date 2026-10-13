@@ -29,6 +29,8 @@ export class ZoomViewer {
   private lastTap = { time: 0, x: 0, y: 0 };
   private lastTouchToggle = 0;
   private safariScale = 1;
+  private loadToken = 0;
+  private showingPlaceholder = false;
 
   constructor(private readonly opts: ZoomViewerOptions = {}) {
     this.img = document.createElement("img");
@@ -57,26 +59,69 @@ export class ZoomViewer {
     this.controls.append(this.outBtn, this.label, this.inBtn, btn("zoom-fit", "Fit", "Fit to screen (0)", () => this.reset()));
 
     this.img.addEventListener("load", () => {
-      this.natural = { w: this.img.naturalWidth, h: this.img.naturalHeight };
-      this.reset();
+      if (this.showingPlaceholder) return;
+      const w = this.img.naturalWidth, h = this.img.naturalHeight;
+      const n = this.natural;
+      // Size unknown beforehand, or images.cex was stale: adopt the real size and refit.
+      // Otherwise leave the view alone so zooming done while loading isn't lost.
+      if (!n || Math.abs(n.w - w) > 1 || Math.abs(n.h - h) > 1) {
+        this.setNatural({ w, h });
+        this.reset();
+      }
       this.img.style.visibility = "";
     });
     this.bindEvents();
     if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => this.onResize()).observe(this.el);
   }
 
-  /** Show a new image, fitted. `size` (from images.cex) lets it lay out before loading. */
-  load(url: string, alt: string, size: Size | null = null): void {
-    this.natural = size && size.w > 0 && size.h > 0 ? size : null;
+  /**
+   * Show a new image, fitted. `size` (from images.cex) lets it lay out before
+   * loading; with a size, `placeholder` (the grid thumbnail) is shown stretched
+   * to full size until the original has downloaded.
+   */
+  load(url: string, alt: string, size: Size | null = null, placeholder?: string): void {
+    const token = ++this.loadToken;
     this.img.alt = alt;
-    this.img.style.visibility = this.natural ? "" : "hidden";
-    this.img.src = url;
-    if (this.natural) this.reset();
+    const known = size && size.w > 0 && size.h > 0 ? size : null;
+    this.setNatural(known);
+    if (!known) {
+      this.showingPlaceholder = false;
+      this.img.style.visibility = "hidden";
+      this.img.src = url;
+      return;
+    }
+    this.img.style.visibility = "";
+    this.reset();
+    if (!placeholder) {
+      this.showingPlaceholder = false;
+      this.img.src = url;
+      return;
+    }
+    this.showingPlaceholder = true;
+    this.img.src = placeholder;
+    const pre = new Image();
+    const swap = () => {
+      if (token !== this.loadToken) return; // user moved on
+      this.showingPlaceholder = false;
+      this.img.src = url;
+    };
+    pre.onload = swap;
+    pre.onerror = swap; // let the visible <img> try (and fail) itself
+    pre.src = url;
   }
 
   clear(): void {
+    this.loadToken++;
+    this.showingPlaceholder = false;
     this.img.removeAttribute("src");
-    this.natural = null;
+    this.setNatural(null);
+  }
+
+  /** Record the image's full size and size the <img> to it (so a thumbnail fills the same box). */
+  private setNatural(size: Size | null): void {
+    this.natural = size;
+    this.img.style.width = size ? `${size.w}px` : "";
+    this.img.style.height = size ? `${size.h}px` : "";
   }
 
   get scale(): number { return this.view.scale; }

@@ -3,7 +3,7 @@ import { groupPhotos, filterPhotos, selectPhotos } from "../lib/group";
 import type { Photo } from "../lib/types";
 
 const photo = (path: string, extra: Partial<Photo> = {}): Photo => ({
-  path, url: path, caption: "", credits: "", license: "", tags: [], date: "",
+  path, url: path, thumb: path, caption: "", credits: "", license: "", tags: [], date: "",
   lat: null, lon: null, place: null, width: null, height: null,
   cataloged: false, indexed: true, ...extra,
 });

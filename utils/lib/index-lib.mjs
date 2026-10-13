@@ -3,14 +3,23 @@ import { readdir } from "node:fs/promises";
 import { join, relative, sep, extname } from "node:path";
 
 export const COLUMNS = ["path", "date", "lat", "lon", "city", "region", "country", "width", "height"];
+/** Folder (inside the Public Folder) holding generated thumbnails; never indexed. */
+export const THUMBS_DIR = "_thumbs";
+
+/** Thumbnail path for an image path: _thumbs/<path>.jpg (keeps a.png and a.jpg distinct). */
+export function thumbPath(path) {
+  return `${THUMBS_DIR}/${path}.jpg`;
+}
+
 export const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".heic", ".heif", ".tif", ".tiff"]);
 
-/** Recursively list image files under root as forward-slash relative paths, sorted. Skips dotfiles. */
+/** Recursively list image files under root as forward-slash relative paths, sorted. Skips dotfiles and _thumbs/. */
 export async function listImages(root) {
   const out = [];
   async function walk(dir) {
     for (const ent of await readdir(dir, { withFileTypes: true })) {
       if (ent.name.startsWith(".")) continue;
+      if (dir === root && ent.name === THUMBS_DIR) continue;
       const full = join(dir, ent.name);
       if (ent.isDirectory()) await walk(full);
       else if (ent.isFile() && IMAGE_EXTS.has(extname(ent.name).toLowerCase()))

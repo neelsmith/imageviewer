@@ -44,6 +44,12 @@ npm run images-index -- --no-geocode     # skip place lookups
 npm test
 ```
 
+Thumbnails: `npm run thumbnails` writes `<Public Folder>/_thumbs/<path>.jpg` (short side
+400 px, ~25–50 KB; `--size`, `--jobs`, `--force`). Skips thumbnails newer than their source;
+never deletes. The grid loads the thumbnail and falls back to the original if it's missing;
+the photo view shows the thumbnail stretched as a placeholder until the original arrives.
+HEIC sources may fail (sharp's prebuilt libvips lacks HEVC) — reported, run continues.
+
 Only new files are read on reruns. Place names come from OpenStreetMap Nominatim
 (≤1 request/s) and are cached in `utils/geocache.json` — commit it.
 

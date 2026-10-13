@@ -28,6 +28,12 @@ describe("mergePhotos", () => {
     expect(mergePhotos([], [cat("a.jpg")], "https://h/").missingFiles).toEqual([]);
   });
 
+  it("gives every photo a thumbnail URL under _thumbs/", () => {
+    const { photos } = mergePhotos([rec("my dir/a.png")], [cat("b.jpg")], "https://h/base/");
+    expect(photos.map((p) => p.thumb)).toEqual([
+      "https://h/base/_thumbs/my%20dir/a.png.jpg", "https://h/base/_thumbs/b.jpg.jpg"]);
+  });
+
   it("URL-encodes each path segment", () => {
     expect(joinUrl("https://h/", "my dir/é #1.jpg")).toBe("https://h/my%20dir/%C3%A9%20%231.jpg");
   });

@@ -6,6 +6,11 @@ export interface MergeResult {
   missingFiles: string[];
 }
 
+/** Thumbnails live at <imageBase>/_thumbs/<path>.jpg (see utils/lib/index-lib.mjs thumbPath). */
+export function thumbUrl(base: string, path: string): string {
+  return joinUrl(base, `_thumbs/${path}.jpg`);
+}
+
 export function joinUrl(base: string, path: string): string {
   const b = base.endsWith("/") ? base : base + "/";
   return b + path.split("/").map(encodeURIComponent).join("/");
@@ -22,13 +27,13 @@ export function mergePhotos(
 ): MergeResult {
   const byPath = new Map<string, Photo>();
   const blank = (path: string): Photo => ({
-    path, url: joinUrl(imageBase, path), caption: "", credits: "", license: "",
+    path, url: joinUrl(imageBase, path), thumb: thumbUrl(imageBase, path), caption: "", credits: "", license: "",
     tags: [], date: "", lat: null, lon: null, place: null, width: null, height: null,
     cataloged: false, indexed: false,
   });
 
   for (const r of records) {
-    byPath.set(r.path, { ...blank(r.path), ...r, url: joinUrl(imageBase, r.path), indexed: true });
+    byPath.set(r.path, { ...blank(r.path), ...r, indexed: true });
   }
   const missingFiles: string[] = [];
   for (const e of entries) {

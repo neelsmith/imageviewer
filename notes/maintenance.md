@@ -15,6 +15,7 @@ Neither task needs a rebuild or a release. The apps read `data/` from GitHub's `
 ## Adding images to pCloud
 
 1. Copy the images into `~/pCloud Drive/Public Folder` and let them sync.
-2. `cd utils && npm run images-index`
+2. `cd utils && npm run images-index && npm run thumbnails`
 3. Commit `data/images.cex` and `utils/geocache.json`, then push to `main`.
+   (Thumbnails go to `Public Folder/_thumbs/` via pCloud sync — nothing to commit.)
 4. Optionally catalog them (above). HEIC images won't display in Chrome or Firefox.
