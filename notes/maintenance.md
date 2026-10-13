@@ -8,6 +8,9 @@ Neither task needs a rebuild or a release. The apps read `data/` from GitHub's `
 
 1. Edit the `.cex` file in `data/`. `path` values are relative to the pCloud Public Folder,
    exactly as in `data/images.cex`.
+   Columns: `path|caption|credits|license|tags`, plus optional `year` and `place` (any order;
+   tags comma-separated). When a catalog has `year`/`place` values, both apps show Year and
+   Place drop-downs (exact match; choice kept in the URL as `year=` / `place=`).
 2. New catalog file? Also add a row to `data/catalog_of_catalogs.cex` (`cex_file` relative to
    the repo root, e.g. `data/catalogs/new.cex`).
 3. Commit and push to `main`.

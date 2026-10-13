@@ -74,18 +74,38 @@ export function groupPhotos(photos: Photo[], mode: GroupMode): PhotoGroup[] {
   return list;
 }
 
-/** Case-insensitive match on caption, path, tags, credits and place. */
+/** Case-insensitive match on caption, path, tags, credits, catalog year/place and EXIF place. */
 export function filterPhotos(photos: Photo[], query: string): Photo[] {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return photos;
   return photos.filter((p) => {
-    const hay = [p.caption, p.path, p.credits, p.tags.join(" "),
+    const hay = [p.caption, p.path, p.credits, p.tags.join(" "), p.year, p.placeName,
       p.place ? placeLabel(p.place) : ""].join(" ").toLowerCase();
     return terms.every((t) => hay.includes(t));
   });
 }
 
-/** Photos to show: optionally only cataloged ones, then the text filter. */
-export function selectPhotos(photos: Photo[], opts: { catalogedOnly: boolean; query: string }): Photo[] {
-  return filterPhotos(opts.catalogedOnly ? photos.filter((p) => p.cataloged) : photos, opts.query);
+/** Catalog columns offered as drop-down filters. */
+export type Facet = "year" | "placeName";
+
+/** Distinct non-empty values of a facet, sorted (numbers in numeric order). */
+export function facetValues(photos: Photo[], facet: Facet): string[] {
+  const vals = new Set(photos.map((p) => p[facet]).filter(Boolean));
+  return [...vals].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+}
+
+export interface SelectOptions {
+  catalogedOnly: boolean;
+  query: string;
+  /** Exact catalog year / place to keep; "" or absent = any. */
+  year?: string;
+  place?: string;
+}
+
+/** Photos to show: optionally only cataloged ones, the year/place drop-downs, then the text filter. */
+export function selectPhotos(photos: Photo[], opts: SelectOptions): Photo[] {
+  return filterPhotos(photos.filter((p) =>
+    (!opts.catalogedOnly || p.cataloged) &&
+    (!opts.year || p.year === opts.year) &&
+    (!opts.place || p.placeName === opts.place)), opts.query);
 }

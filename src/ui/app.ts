@@ -1,6 +1,6 @@
 import type { AppConfig } from "../lib/config";
 import type { Photo } from "../lib/types";
-import { groupPhotos, selectPhotos, placeLabel, type GroupMode, type PhotoGroup } from "../lib/group";
+import { facetValues, groupPhotos, selectPhotos, placeLabel, type Facet, type GroupMode, type PhotoGroup } from "../lib/group";
 import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
 import { versionLabel } from "../lib/version";
@@ -60,12 +60,48 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   let query = "";
   let catalogedOnly = !!opts.catalogToggle && readHash(location.hash).all !== "1";
   let visible: Photo[] = []; // flattened order for lightbox navigation
+  // Year / place drop-downs (optional catalog columns), kept in the hash as year= / place=.
+  const facets: Record<Facet, string> = {
+    year: readHash(location.hash).year ?? "",
+    placeName: readHash(location.hash).place ?? "",
+  };
+  const facetKey: Record<Facet, string> = { year: "year", placeName: "place" };
 
   const count = el("span", { class: "count" });
   const search = el("input", { type: "search", placeholder: "Filter…", "aria-label": "Filter photos" });
   const seg = el("div", { class: "seg", role: "radiogroup", "aria-label": "Group by" });
   const notices = el("div", { class: "notices" });
   const main = el("main", { class: "groups" });
+  function facetSelect(facet: Facet, label: string, anyLabel: string) {
+    const sel = el("select", { class: "facet-select", "aria-label": label, hidden: "" });
+    sel.dataset.facet = facet;
+    sel.dataset.any = anyLabel;
+    sel.addEventListener("change", () => {
+      facets[facet] = sel.value;
+      history.replaceState(null, "",
+        withHash(location.hash, { [facetKey[facet]]: sel.value || null }) || location.pathname + location.search);
+      render();
+    });
+    return sel;
+  }
+  const yearSel = facetSelect("year", "Year", "All years");
+  const placeSel = facetSelect("placeName", "Place", "All places");
+  /** Fill the drop-downs from the loaded photos; hide one whose column is empty everywhere. */
+  function fillFacets() {
+    for (const sel of [yearSel, placeSel]) {
+      const facet = sel.dataset.facet as Facet;
+      const values = facetValues(all, facet);
+      // A value from the URL that isn't in this data is dropped.
+      if (facets[facet] && !values.includes(facets[facet])) {
+        facets[facet] = "";
+        history.replaceState(history.state, "",
+          withHash(location.hash, { [facetKey[facet]]: null }) || location.pathname + location.search);
+      }
+      sel.replaceChildren(new Option(sel.dataset.any!, ""), ...values.map((v) => new Option(v, v)));
+      sel.value = facets[facet];
+      sel.hidden = values.length === 0;
+    }
+  }
   const toggle: HTMLElement[] = [];
   if (opts.catalogToggle) {
     const box = el("input", { type: "checkbox" });
@@ -79,7 +115,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     toggle.push(el("label", { class: "toggle" }, box, " Cataloged images only"));
   }
   const header = el("header", { class: "bar" },
-    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, ...toggle, search, count, versionLabel());
+    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, yearSel, placeSel, ...toggle, search, count, versionLabel());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);
@@ -129,8 +165,10 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     const p = visible[i];
     viewer.load(p.url, p.caption || p.path, p.width && p.height ? { w: p.width, h: p.height } : null, p.thumb);
     const rows: [string, string][] = [
-      ["Caption", p.caption], ["Date", p.date ? formatDate(p.date) : ""],
-      ["Place", p.place ? placeLabel(p.place) : ""], ["Tags", p.tags.join(", ")],
+      ["Caption", p.caption], ["Year", p.year], ["Place", p.placeName],
+      ["Date", p.date ? formatDate(p.date) : ""],
+      // EXIF/GPS place from images.cex; labelled "Location" when the catalog also names a place.
+      [p.placeName ? "Location" : "Place", p.place ? placeLabel(p.place) : ""], ["Tags", p.tags.join(", ")],
       ["Credits", p.credits], ["License", p.license], ["File", p.path],
     ];
     lbInfo.replaceChildren(
@@ -198,7 +236,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     seg.querySelectorAll("button").forEach((b) =>
       b.setAttribute("aria-checked", String(b.dataset.mode === mode)));
     const pool = catalogedOnly ? all.filter((p) => p.cataloged) : all;
-    const groups = groupPhotos(selectPhotos(all, { catalogedOnly, query }), mode);
+    const groups = groupPhotos(selectPhotos(all, { catalogedOnly, query, year: facets.year, place: facets.placeName }), mode);
     visible = groups.flatMap((g) => g.photos);
     let start = 0;
     const sections = groups.map((g) => { const s = section(g, start); start += g.photos.length; return s; });
@@ -206,6 +244,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     count.textContent = `${shown} of ${pool.length} ${catalogedOnly ? "cataloged " : ""}photos`;
     const empty = !all.length ? "No photos loaded."
       : !pool.length ? "No cataloged photos. Untick “Cataloged images only” to see all images."
+      : facets.year || facets.placeName ? "No photos match the filters."
       : "No photos match the filter.";
     main.replaceChildren(...(sections.length ? sections : [el("p", { class: "empty" }, empty)]));
   }
@@ -232,6 +271,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   function apply(r: LoadResult, failed: boolean) {
     all = r.photos;
     warnings = r.warnings;
+    fillFacets();
     render();
     // A link to a single photo (#photo=<path>) opens it once the photos are loaded.
     const wanted = readHash(location.hash).photo;

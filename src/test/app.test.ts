@@ -145,3 +145,65 @@ describe("photo links (#photo=<path>)", () => {
     expect(root.querySelector(".notices")!.textContent).toContain("“zzz.jpg” was not found");
   });
 });
+
+describe("year / place drop-downs", () => {
+  const CAT2 = "path|caption|credits|license|tags|year|place\n" +
+    "a.jpg|A||||1986|Priene\nb.jpg|B||||2019|Leiden\nc.jpg|C||||1986|\n";
+  let root: HTMLElement;
+  const sel = (label: string) => root.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!;
+  const pick = (s: HTMLSelectElement, v: string) => { s.value = v; s.dispatchEvent(new Event("change")); };
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", "/");
+    root = document.createElement("div");
+    document.body.append(root);
+  });
+
+  it("are hidden when the catalog has no year/place columns", async () => {
+    startApp(root, cfg, { load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
+    await flush();
+    expect(sel("Year").hidden).toBe(true);
+    expect(sel("Place").hidden).toBe(true);
+  });
+
+  it("offer the catalog's values, filter the grid and record the choice in the URL", async () => {
+    startApp(root, cfg, { load: async () => buildPhotos(CAT2, IDX, cfg.imageBase) });
+    await flush();
+    expect(sel("Year").hidden).toBe(false);
+    expect([...sel("Year").options].map((o) => o.text)).toEqual(["All years", "1986", "2019"]);
+    expect([...sel("Place").options].map((o) => o.text)).toEqual(["All places", "Leiden", "Priene"]);
+    expect(tiles(root)).toBe(3);
+    pick(sel("Year"), "1986");
+    expect(tiles(root)).toBe(2);
+    expect(location.hash).toBe("#year=1986");
+    pick(sel("Place"), "Priene");
+    expect(tiles(root)).toBe(1);
+    expect(location.hash).toBe("#year=1986&place=Priene");
+    pick(sel("Place"), "Leiden");
+    expect(root.querySelector(".empty")!.textContent).toBe("No photos match the filters.");
+    pick(sel("Year"), "");
+    pick(sel("Place"), "");
+    expect(tiles(root)).toBe(3);
+    expect(location.hash).toBe("");
+  });
+
+  it("restore from the URL, ignoring values not in the data", async () => {
+    history.replaceState(null, "", "/#year=2019&place=Nowhere");
+    startApp(root, cfg, { load: async () => buildPhotos(CAT2, IDX, cfg.imageBase) });
+    await flush();
+    expect(sel("Year").value).toBe("2019");
+    expect(sel("Place").value).toBe("");
+    expect(tiles(root)).toBe(1);
+    expect(location.hash).toBe("#year=2019");
+  });
+
+  it("show year and place in the photo view", async () => {
+    startApp(root, cfg, { load: async () => buildPhotos(CAT2, IDX, cfg.imageBase) });
+    await flush();
+    pick(sel("Place"), "Priene");
+    root.querySelector<HTMLElement>(".tile")!.click();
+    const info = document.querySelector(".lightbox .info")!.textContent!;
+    expect(info).toContain("Year1986");
+    expect(info).toContain("PlacePriene");
+  });
+});

@@ -43,8 +43,9 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig): Promis
   }
 
   function choose(c: CatalogChoice | null) {
-    // Keep the grouping choice, drop any open photo; changing the hash triggers route().
-    location.hash = withHash(location.hash, { catalog: c ? c.file : null, photo: null }) || "#";
+    // Keep the grouping choice; drop the open photo and the year/place filters, which
+    // belong to the old catalog. Changing the hash triggers route().
+    location.hash = withHash(location.hash, { catalog: c ? c.file : null, photo: null, year: null, place: null }) || "#";
   }
 
   function showMenu() {
