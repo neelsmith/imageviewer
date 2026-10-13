@@ -1,8 +1,10 @@
 # Version info
 
 
-Current version: **1.1.0**
+Current version: **1.2.0**
 
+
+**1.2.0**, *Oct. 13, 2026*: adds +/- zoom on individual images.
 
 **1.1.0**, *Oct. 13, 2026*: private app adds toggle to view all images or only cataloged images.
 
