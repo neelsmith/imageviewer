@@ -2,6 +2,7 @@ import type { AppConfig } from "../lib/config";
 import { catalogUrl, parseCatalogList, type CatalogChoice } from "../lib/catalogs";
 import { readHash, withHash } from "../lib/hash";
 import { startApp, type AppHandle } from "./app";
+import { versionLabel } from "../lib/version";
 import { fetchText, loadCatalog } from "./load";
 
 /**
@@ -65,6 +66,7 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig): Promis
     p.textContent = "Choose a catalog:";
     menu.append(h, p, list);
     if (errors.length) menu.append(message(errors.join(" ")));
+    menu.append(versionLabel());
     root.replaceChildren(menu);
     list.querySelector("button")?.focus();
   }

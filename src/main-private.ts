@@ -1,3 +1,4 @@
+// Password-protected app showing every image (private.html).
 import "./ui/styles.css";
 import authConfig from "./auth.json";
 import { configFromSearch, DEFAULTS } from "./lib/config";

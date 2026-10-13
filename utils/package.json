@@ -7,7 +7,8 @@
   "scripts": {
     "images-index": "node make-images-index.mjs",
     "test": "node --test \"test/*.test.mjs\"",
-    "set-password": "node set-password.mjs"
+    "set-password": "node set-password.mjs",
+    "check-release": "node check-release.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",

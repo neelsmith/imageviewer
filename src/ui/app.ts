@@ -3,6 +3,7 @@ import type { Photo } from "../lib/types";
 import { filterPhotos, groupPhotos, placeLabel, type GroupMode, type PhotoGroup } from "../lib/group";
 import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
+import { versionLabel } from "../lib/version";
 
 const MODES: { mode: GroupMode; label: string }[] = [
   { mode: "date", label: "Date" },
@@ -59,7 +60,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   const notices = el("div", { class: "notices" });
   const main = el("main", { class: "groups" });
   const header = el("header", { class: "bar" },
-    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, search, count);
+    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, search, count, versionLabel());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);

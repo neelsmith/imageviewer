@@ -111,3 +111,18 @@
 - docs/ test of catalogs.html failed: built app reads data from GitHub `main`, and
   data/catalog_of_catalogs.cex was never committed (404 on main and dev). Neel to commit+push.
   Error messages now include the URL tried.
+
+## 2026-10-13 — session 8: versioning + output names
+
+- Output renamed: `index.html` = catalog chooser (no password), `private.html` = all images
+  with password. Sources: src/index.html + main-catalogs.ts, src/private.html + main-private.ts.
+  `npm run build` = `vite build && vite build --mode private`.
+- Version 1.0.0 in src/package.json, injected via Vite `define` (__APP_VERSION__; "-dev" in
+  dev server). `lib/version.ts` renders a muted "v1.0.0" link to the GitHub release in the
+  top bar, catalog menu and password screen.
+- `utils/check-release.mjs` (`npm run check-release -- v1.0.0`). Release steps in
+  notes/development.md. Currently reports docs/ not yet rebuilt (expected).
+- 40 Vitest + 20 node:test pass; browser check shows v1.0.0 on menu, bar and password screen.
+- Removed stale src/dist/catalogs.html (gitignored build output).
+- check-release: tag argument now optional (defaults to v<package.json version>); Neel hit 'Tag ""' running it without one.
+- check-release no longer checks docs/private.html (Neel moves it around docs/); only docs/index.html.
