@@ -1,0 +1,37 @@
+[
+  {
+    "objectID": "cataloging/index.html",
+    "href": "cataloging/index.html",
+    "title": "Cataloging images",
+    "section": "",
+    "text": "Warning\n\n\n\nDocumentation is currently incomplete but should be enough to get you started.\nKey points:"
+  },
+  {
+    "objectID": "cataloging/index.html#example-minimum-catalog",
+    "href": "cataloging/index.html#example-minimum-catalog",
+    "title": "Cataloging images",
+    "section": "Example: minimum catalog",
+    "text": "Example: minimum catalog\nImage catalogs must include the following columns:\npath|caption|credits|license|tags\n\npaths are relative to the catalog file\ntags are comma-separated labels for filtering images\n\npath|caption|credits|license|tags\nleiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden"
+  },
+  {
+    "objectID": "cataloging/index.html#example-optional-fields",
+    "href": "cataloging/index.html#example-optional-fields",
+    "title": "Cataloging images",
+    "section": "Example: optional fields",
+    "text": "Example: optional fields\nYou may optionally include additional columns for year and place.\npath|caption|credits|license|tags|year|place\nleiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden, manuscripts|2019|Leiden, NL|"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Image viewers",
+    "section": "",
+    "text": "The github project at https://github.com/neelsmith/imageviewer hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an example installation.\nThe apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images."
+  },
+  {
+    "objectID": "index.html#using-image-viewer-apps",
+    "href": "index.html#using-image-viewer-apps",
+    "title": "Image viewers",
+    "section": "Using image viewer apps",
+    "text": "Using image viewer apps\nimage-viewer.html is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.\nSee this page for information about how to add cataloging information for your local images."
+  }
+]
