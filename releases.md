@@ -3,6 +3,9 @@
 
 Current version: **1.6.0**
 
+
+**1.7.0**, *?*: make settings for app configurable
+
 **1.6.0**,*Oct. 13, 2027*:  apps separately track software version number and last modified date for data.
 
 

@@ -7,8 +7,11 @@ describe("version", () => {
     expect(APP_VERSION.replace(/-dev$/, "")).toBe(pkg.version);
   });
   it("links releases to their GitHub tag, but not dev builds", () => {
-    expect(releaseUrl("1.0.0")).toBe("https://github.com/neelsmith/imageviewer/releases/tag/v1.0.0");
+    expect(releaseUrl("1.0.0")).toBe("https://github.com/YOUR-GITHUB-USER/imageviewer/releases/tag/v1.0.0");
+    expect(releaseUrl("1.0.0", "https://github.com/neelsmith/imageviewer"))
+      .toBe("https://github.com/neelsmith/imageviewer/releases/tag/v1.0.0");
     expect(releaseUrl("1.0.0-dev")).toBeNull();
+    expect(releaseUrl("1.0.0", "")).toBeNull(); // no repoUrl configured
   });
   it("renders a link for releases and plain text otherwise", () => {
     const a = versionLabel("1.2.3");
