@@ -22,10 +22,10 @@ in the published HTML.
 ```sh
 cd src
 npm install
-npm run dev          # http://localhost:5173 (+ /private.html, /private-catalogs.html) — reads ../data/ from the local repo
+npm run dev          # http://localhost:5173 (+ /private.html, /private-catalogs.html, /local.html) — reads ../data/ from the local repo
 npm test             # Vitest unit tests (lib/)
 npm run typecheck
-npm run build        # → src/dist/index.html, private.html, private-catalogs.html, each self-contained
+npm run build        # → src/dist/index.html, private.html, private-catalogs.html, local.html, each self-contained
 ```
 
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
@@ -47,8 +47,9 @@ grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + light
 | `index.html` (source `src/index.html`, `main-catalogs.ts`) | menu from `data/catalog_of_catalogs.cex` → chosen catalog, cataloged images only | no |
 | `private.html` (source `src/private.html`, `main-private.ts`) | `data/catalog.cex` + every image in `data/images.cex`; "Cataloged images only" toggle (default on; off = `#all=1`) | yes (if set) |
 | `private-catalogs.html` (source `src/private-catalogs.html`, `main-private-catalogs.ts`) | menu from `data/catalog_of_private_catalogs.cex`; the chosen catalog's images (same view as index.html) | per catalog, from the list's optional `password` column |
+| `local.html` (source `src/local.html`, `main-local.ts`; build mode `local-folders`) | a folder on this computer, opened from disk — see below | no |
 
-Dev URLs: http://localhost:5173/, /private.html and /private-catalogs.html
+Dev URLs: http://localhost:5173/, /private.html, /private-catalogs.html and /local.html
 (`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
 root, e.g. `data/catalogs/mss.cex`.
 
@@ -103,3 +104,25 @@ shows "vX.Y.Z-dev". Data updates (catalogs, images.cex) are not releases.
    (private.html and private-catalogs.html aren't checked — they may live anywhere under docs/).
 4. Commit, then `git tag -a vX.Y.Z -m "Release vX.Y.Z"` and `git push --follow-tags`.
 5. Optional: GitHub → Releases → draft from the tag, attach the two HTML files.
+
+## local.html (local folders)
+
+Opened from disk (double-click); **not** copied to `docs/` — attach it to GitHub releases.
+~2.2 MB because it carries the HEIC decoder (libheif-js 1.23.5, LGPL-3.0, WebAssembly).
+
+- Opening a folder: folder picker (Chrome/Edge) → `lib/local/tree.ts` dirFromHandle; otherwise
+  upload-style control (Safari/Firefox) → dirFromFileList; drag-and-drop → dirFromEntry.
+  Skips dotfiles, `_thumbs/`, `__MACOSX`.
+- Hash state: `dir=<path>`, `sub=1` (include subfolders), `cat=<file.cex>|none`, plus the usual
+  group/photo/all/year/place. Default catalog: `catalog.cex` if the folder has one. A catalog's
+  paths are relative to its folder; with a catalog the whole tree is read.
+- Metadata: exifr in the browser (date taken, GPS). No place names offline: Location groups by
+  coordinates rounded to 0.01° ("39.28° N, 76.54° W").
+- Images (`ui/local/images.ts`): JPEG/PNG/WebP straight from the file (full size). HEIC tiles =
+  the thumbnail stored in the file (240×320), decoded by libheif in 1–4 Blob workers
+  (`ui/local/heic.ts`, `heic-worker.js`); no stored thumbnail → full decode + downscale.
+  Photo view: Safari's own HEIC decoder if available (probed once), else full decode in a
+  worker; the tile is shown stretched meanwhile. Only the last 3 full decodes are kept.
+- startApp hooks used: `images` (tile/full/placeholder/size/originalUrl), `banner`
+  (subfolder buttons), `markUncataloged`, `toolbar`, `catalogToggle`.
+- Not yet: drawing only on-screen rows (very large folders), recent folders, place names.

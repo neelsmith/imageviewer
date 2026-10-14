@@ -5,6 +5,7 @@ import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
 import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
+import type { ImageProvider } from "./local/images";
 
 const MODES: { mode: GroupMode; label: string }[] = [
   { mode: "date", label: "Date" },
@@ -45,6 +46,15 @@ export interface AppOptions {
    * every image; that choice is kept in the URL hash as `all=1`.
    */
   catalogToggle?: boolean;
+  /**
+   * Images that aren't plain URLs (local.html): tiles are requested as they scroll into
+   * view, and the photo view asks for the full image. `originalUrl` feeds "Open original".
+   */
+  images?: ImageProvider & { originalUrl?(p: Photo): string };
+  /** Shown between the notices and the grid (local.html: subfolders). */
+  banner?: HTMLElement;
+  /** Mark photos missing from the catalog (dot on tile, "Not in catalog"). Default true. */
+  markUncataloged?: boolean;
 }
 
 export interface AppHandle {
@@ -121,7 +131,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     lock.addEventListener("click", opts.onLock);
     header.append(lock);
   }
-  root.replaceChildren(header, notices, main);
+  root.replaceChildren(header, notices, ...(opts.banner ? [opts.banner] : []), main);
 
   for (const m of MODES) {
     const b = el("button", { type: "button", role: "radio", "data-mode": m.mode }, m.label);
@@ -140,6 +150,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     el("div", { class: "stage" }, viewer.el, prev, next, close, viewer.controls), lbInfo);
   document.body.append(lb);
   let current = -1;
+  let fullToken = 0; // ignores full images that arrive after moving on
 
   /**
    * The open photo is kept in the URL hash as `photo=<path>`, so every photo view has
@@ -163,7 +174,19 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     if (i < 0 || i >= visible.length) return;
     current = i;
     const p = visible[i];
-    viewer.load(p.url, p.caption || p.path, p.width && p.height ? { w: p.width, h: p.height } : null, p.thumb);
+    const alt = p.caption || p.path;
+    if (opts.images) {
+      // Show the tile (stretched) at once if we know the photo's size, then the full image.
+      const imgs = opts.images, token = ++fullToken;
+      const known = imgs.size(p), ph = imgs.placeholder(p);
+      if (known && ph) viewer.preview(ph, alt, known);
+      imgs.full(p).then(
+        (r) => { if (token === fullToken) viewer.load(r.url, alt, r.size ?? imgs.size(p) ?? known, ph ?? undefined); },
+        (e) => { if (token === fullToken) { viewer.clear(); lbInfo.prepend(el("p", { class: "badge" }, `Can't display: ${e.message}`)); } },
+      );
+    } else {
+      viewer.load(p.url, alt, p.width && p.height ? { w: p.width, h: p.height } : null, p.thumb);
+    }
     const rows: [string, string][] = [
       ["Caption", p.caption], ["Year", p.year], ["Place", p.placeName],
       ["Date", p.date ? formatDate(p.date) : ""],
@@ -172,9 +195,9 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       ["Credits", p.credits], ["License", p.license], ["File", p.path],
     ];
     lbInfo.replaceChildren(
-      ...(p.cataloged ? [] : [el("p", { class: "badge" }, "Not in catalog")]),
+      ...(p.cataloged || opts.markUncataloged === false ? [] : [el("p", { class: "badge" }, "Not in catalog")]),
       el("dl", {}, ...rows.filter(([, v]) => v).flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
-      el("a", { href: p.url, target: "_blank", rel: "noopener" }, "Open original ↗"),
+      el("a", { href: opts.images?.originalUrl?.(p) ?? p.url, target: "_blank", rel: "noopener" }, "Open original ↗"),
     );
     prev.disabled = i === 0;
     next.disabled = i === visible.length - 1;
@@ -183,7 +206,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     close.focus();
     if (how !== "none") setPhotoHash(p.path, how === "push");
   }
-  const closeLightbox = () => { lb.hidden = true; viewer.clear(); current = -1; };
+  const closeLightbox = () => { lb.hidden = true; viewer.clear(); current = -1; fullToken++; };
   function hide() {
     if (lb.hidden) return;
     closeLightbox();
@@ -212,16 +235,38 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   document.addEventListener("keydown", onKey);
 
   // ---- Rendering ----
+  // With an image provider, tiles get their image only when they come near the screen.
+  const pendingTiles = new WeakMap<Element, () => void>();
+  const tileObserver = opts.images && typeof IntersectionObserver !== "undefined"
+    ? new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        tileObserver!.unobserve(e.target);
+        pendingTiles.get(e.target)?.();
+        pendingTiles.delete(e.target);
+      }
+    }, { rootMargin: "600px 0px" })
+    : null;
+
   function tile(p: Photo, index: number) {
-    // Thumbnail first; if there isn't one yet, fall back to the full-size original.
-    const img = el("img", { src: p.thumb, alt: p.caption || p.path, loading: "lazy", decoding: "async" });
+    const img = el("img", { alt: p.caption || p.path, decoding: "async" });
     const b = el("button", { class: "tile", type: "button", title: p.caption || p.path }, img);
-    if (!p.cataloged) b.classList.add("uncataloged");
-    let triedOriginal = false;
-    img.addEventListener("error", () => {
-      if (triedOriginal) b.classList.add("broken");
-      else { triedOriginal = true; img.src = p.url; }
-    });
+    if (!p.cataloged && opts.markUncataloged !== false) b.classList.add("uncataloged");
+    if (opts.images) {
+      const imgs = opts.images;
+      const fill = () => imgs.tile(p).then((u) => { img.src = u; }, () => b.classList.add("broken"));
+      img.addEventListener("error", () => b.classList.add("broken"));
+      if (tileObserver) { pendingTiles.set(b, fill); tileObserver.observe(b); } else fill();
+    } else {
+      // Thumbnail first; if there isn't one yet, fall back to the full-size original.
+      img.loading = "lazy";
+      img.src = p.thumb;
+      let triedOriginal = false;
+      img.addEventListener("error", () => {
+        if (triedOriginal) b.classList.add("broken");
+        else { triedOriginal = true; img.src = p.url; }
+      });
+    }
     b.addEventListener("click", () => show(index, "push"));
     return b;
   }
@@ -233,6 +278,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   }
 
   function render() {
+    tileObserver?.disconnect(); // tiles about to be replaced
     seg.querySelectorAll("button").forEach((b) =>
       b.setAttribute("aria-checked", String(b.dataset.mode === mode)));
     const pool = catalogedOnly ? all.filter((p) => p.cataloged) : all;
@@ -291,6 +337,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   return {
     destroy() {
       alive = false;
+      tileObserver?.disconnect();
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("hashchange", onHashChange);
       lb.remove();
