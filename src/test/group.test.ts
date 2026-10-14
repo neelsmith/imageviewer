@@ -5,7 +5,7 @@ import type { Photo } from "../lib/types";
 const photo = (path: string, extra: Partial<Photo> = {}): Photo => ({
   path, url: path, thumb: path, caption: "", credits: "", license: "", tags: [], year: "", placeName: "", date: "",
   lat: null, lon: null, place: null, width: null, height: null,
-  cataloged: false, indexed: true, ...extra,
+  cataloged: false, catalogOrder: null, indexed: true, ...extra,
 });
 
 const leiden = { city: "Leiden", region: "South Holland", country: "Netherlands" };
@@ -85,5 +85,23 @@ describe("year / place drop-downs", () => {
     expect(sel({ year: "2019", place: "Priene" })).toEqual([]);
     expect(sel({ year: "", place: "" })).toHaveLength(5);
     expect(sel({ query: "1986" })).toEqual(["a.jpg", "c.jpg"]); // text filter sees them too
+  });
+});
+
+describe("catalog order", () => {
+  const cat = (path: string, order: number, extra: Partial<Photo> = {}) =>
+    photo(path, { cataloged: true, catalogOrder: order, ...extra });
+  const MIXED = [
+    cat("z.jpg", 0, { date: "2019-06-01T00:00:00", tags: ["t"] }),
+    photo("new.jpg", { date: "2019-06-30T00:00:00", tags: ["t"] }),
+    cat("a.jpg", 2, { date: "2019-06-20T00:00:00", tags: ["t"] }),
+    cat("m.jpg", 1, { date: "2019-06-10T00:00:00", tags: ["t"] }),
+    photo("old.jpg", { date: "2019-06-02T00:00:00", tags: ["t"] }),
+  ];
+  it("orders cataloged photos by catalog row within a group, uncataloged after (newest first)", () => {
+    expect(summary(groupPhotos(MIXED, "date"))).toEqual([
+      ["June 2019", ["z.jpg", "m.jpg", "a.jpg", "new.jpg", "old.jpg"]],
+    ]);
+    expect(summary(groupPhotos(MIXED, "tag"))[0][1]).toEqual(["z.jpg", "m.jpg", "a.jpg", "new.jpg", "old.jpg"]);
   });
 });

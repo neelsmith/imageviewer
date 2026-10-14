@@ -4,14 +4,17 @@
 Current version: **1.6.0**
 
 
-**1.7.0**, *?*: make settings for app configurable
+**1.7.0**, *Oct. 14, 2026*: 
 
-**1.6.0**,*Oct. 13, 2027*:  apps separately track software version number and last modified date for data.
+- settings for apps are now maintained in a separate config file and used at build time
+- lightbox displays preserve order of cataloged images 
+
+**1.6.0**,*Oct. 13, 2026*:  apps separately track software version number and last modified date for data.
 
 
-**1.5.0**,*Oct. 13, 2027*:  adds support for password-protected individual catalogs
+**1.5.0**,*Oct. 13, 2026*:  adds support for password-protected individual catalogs
 
-**1.4.0**,*Oct. 13, 2027*: 
+**1.4.0**,*Oct. 13, 2026*: 
 
 - adds utility to cull obsolete thumbnails.
 - allows optional `year` and `place` columns in catalogs
