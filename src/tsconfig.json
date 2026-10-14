@@ -10,5 +10,5 @@
     "resolveJsonModule": true,
     "types": ["vitest/globals", "node"]
   },
-  "include": ["site.config.example.json", "lib", "ui", "build", "test", "main-private.ts", "main-catalogs.ts", "main-private-catalogs.ts", "auth.json", "vite-env.d.ts", "vite.config.ts"]
+  "include": ["site.config.example.json", "lib", "ui", "build", "test", "main-private.ts", "main-catalogs.ts", "main-local.ts", "main-private-catalogs.ts", "auth.json", "vite-env.d.ts", "vite.config.ts"]
 }

@@ -8,13 +8,17 @@ import { loadSiteConfig, publicSiteConfig } from "./build/site-config";
 // The app version lives in package.json ("version") and is baked into both pages.
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
-// Three single-file apps, built one at a time so each is fully self-contained:
+// Four single-file apps, built one at a time so each is fully self-contained:
 //   vite build                         → dist/index.html            (catalog chooser, cataloged images only)
 //   vite build --mode private          → dist/private.html          (all images, password screen)
 //   vite build --mode private-catalogs → dist/private-catalogs.html (chooser for
 //                                         catalog_of_private_catalogs.cex, password per catalog)
-// In `npm run dev` all are served: /, /private.html and /private-catalogs.html.
-const ENTRIES: Record<string, string> = { private: "private.html", "private-catalogs": "private-catalogs.html" };
+//   vite build --mode local-folders    → dist/local.html            (local folders; open from disk)
+// In `npm run dev` all are served: /, /private.html, /private-catalogs.html and /local.html.
+const ENTRIES: Record<string, string> = {
+  private: "private.html", "private-catalogs": "private-catalogs.html",
+  "local-folders": "local.html", // opened from disk only ("local" is reserved by Vite); carries the HEIC decoder (~2 MB)
+};
 
 export default defineConfig(({ mode, command }) => {
   const entry = ENTRIES[mode] ?? "index.html";

@@ -110,6 +110,20 @@ export class ZoomViewer {
     pre.src = url;
   }
 
+  /**
+   * Show a stand-in (e.g. the grid tile) sized as the full image while the real image is
+   * still being prepared; a later load(url, …, placeholder) replaces it.
+   */
+  preview(url: string, alt: string, size: Size): void {
+    ++this.loadToken;
+    this.img.alt = alt;
+    this.setNatural(size);
+    this.img.style.visibility = "";
+    this.reset();
+    this.showingPlaceholder = true;
+    this.img.src = url;
+  }
+
   clear(): void {
     this.loadToken++;
     this.showingPlaceholder = false;

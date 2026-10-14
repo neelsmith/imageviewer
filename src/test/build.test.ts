@@ -14,14 +14,15 @@ const selfContained = (html: string) => {
 };
 
 describe("production build", () => {
-  it("emits three self-contained pages: index.html, private.html, private-catalogs.html", async () => {
+  it("emits four self-contained pages: index.html, private.html, private-catalogs.html, local.html", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "iv-build-"));
     const common = { root: resolve(__dirname, ".."), configFile: resolve(__dirname, "../vite.config.ts"),
       logLevel: "silent" as const };
     await build({ ...common, build: { outDir, emptyOutDir: true } });
     await build({ ...common, mode: "private", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "private-catalogs", build: { outDir, emptyOutDir: false } });
-    expect((await readdir(outDir)).sort()).toEqual(["index.html", "private-catalogs.html", "private.html"]);
+    await build({ ...common, mode: "local-folders", build: { outDir, emptyOutDir: false } });
+    expect((await readdir(outDir)).sort()).toEqual(["index.html", "local.html", "private-catalogs.html", "private.html"]);
 
     const priv = await readFile(join(outDir, "private.html"), "utf8");
     selfContained(priv);
@@ -37,11 +38,19 @@ describe("production build", () => {
     selfContained(pc);
     expect(pc).toContain("catalog_of_private_catalogs.cex");
 
-    // Release version (no "-dev") is baked into both pages.
-    for (const html of [index, priv, pc]) {
+    const local = await readFile(join(outDir, "local.html"), "utf8");
+    selfContained(local);
+    expect(local).toContain("_heif_context_alloc"); // the HEIC decoder is inside
+    expect(local).toContain("Choose a folder");
+    // The decoder (~2 MB) is only in local.html.
+    for (const html of [index, priv, pc]) expect(html).not.toContain("_heif_context_alloc");
+    expect(local.length).toBeGreaterThan(1_500_000);
+
+    // Release version (no "-dev") is baked into every page.
+    for (const html of [index, priv, pc, local]) {
       // The minifier may quote it with ", ' or `.
       expect(html).toMatch(new RegExp(`["'\`]${pkg.version.replace(/\./g, "\\.")}["'\`]`));
       expect(html).not.toContain(`${pkg.version}-dev`);
     }
-  }, 60_000);
+  }, 120_000);
 });

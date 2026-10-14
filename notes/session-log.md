@@ -275,3 +275,31 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   uncataloged ones newest first. Group order unchanged. Photo-view previous/next follows.
 - 86 Vitest pass; browser check with a catalog deliberately out of date order: grid and
   previous/next follow the catalog. Not committed; app change → version bump.
+
+## 2026-10-14 — session 20: local.html plan + spike
+
+- Planned a 4th app, local.html (opened from disk; browse a chosen folder tree; catalogs;
+  browser-independent HEIC). Neel: no saved thumbnails; wants catalogs + HEIC everywhere.
+- Spike results in notes/local-app-spike.md: libheif-js works in a Blob worker from file://
+  in Chromium; 93/98 of Neel's HEIC have 240×320 embedded thumbnails (2–4 ms); full decode
+  ~0.4–0.6 s on his Mac. Spike page scratch/local-spike.html for Safari/Firefox/Chrome runs.
+- Safari 26.5 spike results recorded (native HEIC ~60 ms; tiles 5 ms; software 0.2–0.4 s; no folder picker, upload control fine).
+
+## 2026-10-14 — session 21: local.html built
+
+- New 4th app `local.html` (build mode `local-folders`; Vite reserves "local"). Details in
+  notes/development.md "local.html". New code: lib/local/tree.ts, lib/local/meta.ts,
+  ui/local/heic.ts + heic-worker.js, ui/local/images.ts, ui/local-app.ts, main-local.ts.
+  startApp gained `images`, `banner`, `markUncataloged` options; ZoomViewer gained
+  `preview()` (placeholder without the stale-size refit that made it show 100%).
+- Deps (src devDependencies, bundled): libheif-js 1.23.5, exifr ^7.1.3.
+- Tests: 101 Vitest (new: local-tree, local-meta, local-images, local-app UI flow; build test
+  now builds 4 pages). Headless Chromium e2e from file:// with 4 of Neel's HEIC + a JPEG +
+  catalog.cex: catalog default/order/missing warning, toggle, no-catalog, subfolder
+  navigation, breadcrumb/Back, include subfolders, HEIC tiles 240×320, full HEIC decode in
+  worker ~0.9 s (2 slow cores), zoom, next photo placeholder, Open another folder.
+- Not tested: Safari/Firefox on the Mac, real folder picker click, large folders.
+- Not committed; local.html not for docs/.
+- Neel: local.html works well in Safari (his first real-browser test).
+- Neel: local.html also excellent in Chrome (folder picker + software HEIC decode confirmed on his Mac).
+- Fix: src/package-lock.json had never picked up exifr + libheif-js (my scratch copy was overwritten on each sync); regenerated and copied. Neel's build failed until 'npm install' in src/.
