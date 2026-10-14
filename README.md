@@ -8,4 +8,4 @@ Apps for light-table and zoomable/pannable display of individual images, impleme
 - **1.x** series focuses on serving files hosted on [pCloud](https://www.pcloud.com).
 - the project's github pages site hosts an [example installation](https://neelsmith.github.io/imageviewer/)
 - `image-viewer.html` is a stand-alone app you can use to browse and catalog images in your local file system
-- documentation for `image-viewer.html` is available at [https://neelsmith.github.io/imageviewer](https://neelsmith.github.io/imageviewer)
+- documentation for `image-viewer.html` is available at [https://neelsmith.github.io/imageviewer/docs](https://neelsmith.github.io/imageviewer/docs/)
