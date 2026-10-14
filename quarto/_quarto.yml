@@ -1,6 +1,6 @@
 project:
   type: website
-  output-dir: quarto-build
+  output-dir: quarto_build
 
 execute:
   freeze: auto
