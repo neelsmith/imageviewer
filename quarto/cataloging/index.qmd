@@ -1,0 +1,42 @@
+---
+title: "Cataloging images"
+---
+
+
+::: {.callout-warning}
+Documentation is currently incomplete but should be enough to get you started.
+:::
+
+
+Key points:
+
+- put text files named *`.cex` in a folder with images. The catalog can apply to images in subdirectories.
+- columns are separated using pipe (`|`) character as delimiter
+- catalog files have a header line
+- you can have as many catalog files as you like in your file system
+
+
+
+## Example: minimum catalog
+
+Image catalogs must include the following columns:
+
+`path|caption|credits|license|tags`
+
+- paths are relative to the catalog file
+- tags are comma-separated labels for filtering images
+
+```
+path|caption|credits|license|tags
+leiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden
+```
+
+## Example: optional fields
+
+You may optionally include additional columns for `year` and `place`.
+
+
+```
+path|caption|credits|license|tags|year|place
+leiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden, manuscripts|2019|Leiden, NL|
+```

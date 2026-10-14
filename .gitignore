@@ -1,3 +1,4 @@
 .DS_Store
 scratch/
 src/site.config.json
+quarto/quarto_build/

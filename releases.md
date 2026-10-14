@@ -3,7 +3,10 @@
 
 Current version: **1.8.0**
 
-**1.8.0**, *Oct. 14, 2026*:  adds new `image-viewer.html` app for use with local images in a local file system.
+**1.8.0**, *Oct. 14, 2026*:  
+
+- adds new `image-viewer.html` app for use with images in a local file system.
+- adds new documentation web site for using local image viewer app.
 
 **1.7.0**, *Oct. 14, 2026*: 
 
