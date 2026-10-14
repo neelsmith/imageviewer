@@ -302,3 +302,4 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - Not committed; local.html not for docs/.
 - Neel: local.html works well in Safari (his first real-browser test).
 - Neel: local.html also excellent in Chrome (folder picker + software HEIC decode confirmed on his Mac).
+- Fix: src/package-lock.json had never picked up exifr + libheif-js (my scratch copy was overwritten on each sync); regenerated and copied. Neel's build failed until 'npm install' in src/.
