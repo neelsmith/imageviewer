@@ -24,6 +24,13 @@ describe("mergePhotos", () => {
     expect(missingFiles).toEqual(["gone.jpg"]);
   });
 
+  it("records each photo's catalog row (first row wins for duplicates)", () => {
+    const { photos } = mergePhotos([rec("a.jpg"), rec("u.jpg")],
+      [cat("c.jpg"), cat("a.jpg"), cat("b.jpg"), cat("c.jpg", { caption: "again" })], "https://h/");
+    const order = Object.fromEntries(photos.map((p) => [p.path, p.catalogOrder]));
+    expect(order).toEqual({ "a.jpg": 1, "u.jpg": null, "c.jpg": 0, "b.jpg": 2 });
+  });
+
   it("does not report missing files when no index was loaded", () => {
     expect(mergePhotos([], [cat("a.jpg")], "https://h/").missingFiles).toEqual([]);
   });

@@ -29,17 +29,19 @@ export function mergePhotos(
   const blank = (path: string): Photo => ({
     path, url: joinUrl(imageBase, path), thumb: thumbUrl(imageBase, path), caption: "", credits: "", license: "",
     tags: [], year: "", placeName: "", date: "", lat: null, lon: null, place: null, width: null, height: null,
-    cataloged: false, indexed: false,
+    cataloged: false, catalogOrder: null, indexed: false,
   });
 
   for (const r of records) {
     byPath.set(r.path, { ...blank(r.path), ...r, indexed: true });
   }
   const missingFiles: string[] = [];
-  for (const e of entries) {
+  entries.forEach((e, i) => {
     const existing = byPath.get(e.path);
     if (!existing && records.length) missingFiles.push(e.path);
-    byPath.set(e.path, { ...(existing ?? blank(e.path)), ...e, cataloged: true });
-  }
+    // A path listed twice keeps the position of its first row.
+    const catalogOrder = existing?.catalogOrder ?? i;
+    byPath.set(e.path, { ...(existing ?? blank(e.path)), ...e, cataloged: true, catalogOrder });
+  });
   return { photos: [...byPath.values()], missingFiles };
 }

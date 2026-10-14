@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import { inlineAll } from "./build/inline-all";
 import { serveData } from "./build/serve-data";
+import { loadSiteConfig, publicSiteConfig } from "./build/site-config";
 
 // The app version lives in package.json ("version") and is baked into both pages.
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
@@ -16,10 +18,17 @@ const ENTRIES: Record<string, string> = { private: "private.html", "private-cata
 
 export default defineConfig(({ mode, command }) => {
   const entry = ENTRIES[mode] ?? "index.html";
+  // Site URLs come from site.config.json (gitignored). Tests use the committed example.
+  const testing = !!process.env.VITEST;
+  const site = loadSiteConfig(
+    fileURLToPath(new URL(testing ? "./site.config.example.json" : "./site.config.json", import.meta.url)),
+    { allowPlaceholders: testing },
+  );
   return {
     plugins: [inlineAll(), serveData("../data")],
     define: {
       __APP_VERSION__: JSON.stringify(command === "serve" ? `${version}-dev` : version),
+      __SITE_CONFIG__: JSON.stringify(publicSiteConfig(site)),
     },
     build: {
       outDir: "dist",

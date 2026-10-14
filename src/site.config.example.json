@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy to site.config.json (gitignored) and fill in. Read by npm run build / dev and by the utils/ scripts.",
+  "imageBase": "https://filedn.com/YOUR-PUBLIC-FOLDER-ID/",
+  "dataBase": "https://raw.githubusercontent.com/YOUR-GITHUB-USER/imageviewer/main/data/",
+  "repoUrl": "https://github.com/YOUR-GITHUB-USER/imageviewer",
+  "localImageRoot": "~/pCloud Drive/Public Folder"
+}

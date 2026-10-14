@@ -49,6 +49,8 @@ export interface Photo {
   height: number | null;
   /** Has a row in catalog.cex. */
   cataloged: boolean;
+  /** Position of its (first) row in the catalog, 0-based; null if not cataloged. */
+  catalogOrder: number | null;
   /** Has a row in images.cex (i.e. the file was found in the pCloud folder). */
   indexed: boolean;
 }

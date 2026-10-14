@@ -8,12 +8,12 @@
 // are skipped, so reruns only process new or changed photos. The first run reads
 // every full image through pCloud Drive and can take a long time.
 import { mkdir, stat } from "node:fs/promises";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import sharp from "sharp";
 import { listImages, thumbPath } from "./lib/index-lib.mjs";
+import { defaultImageRoot } from "./lib/site-config.mjs";
 
 async function mtime(file) {
   try { return (await stat(file)).mtimeMs; } catch { return null; }
@@ -60,7 +60,7 @@ export async function makeThumbnails(root, { size = 400, force = false, jobs = 4
 
 async function main() {
   const { values } = parseArgs({ options: {
-    root: { type: "string", default: join(homedir(), "pCloud Drive", "Public Folder") },
+    root: { type: "string", default: defaultImageRoot() },
     size: { type: "string", default: "400" },
     jobs: { type: "string", default: "4" },
     force: { type: "boolean", default: false },

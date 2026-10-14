@@ -1,10 +1,11 @@
-export const REPO_URL = "https://github.com/neelsmith/imageviewer";
+/** GitHub repo page from site.config.json ("" if not set: no release links). */
+export const REPO_URL: string = __SITE_CONFIG__.repoUrl ?? "";
 
 export const APP_VERSION: string = __APP_VERSION__;
 
-/** GitHub release page for a version, or null for dev/pre-release builds. */
-export function releaseUrl(version: string): string | null {
-  return /^\d+\.\d+\.\d+$/.test(version) ? `${REPO_URL}/releases/tag/v${version}` : null;
+/** GitHub release page for a version, or null for dev/pre-release builds or no repoUrl. */
+export function releaseUrl(version: string, repoUrl: string = REPO_URL): string | null {
+  return repoUrl && /^\d+\.\d+\.\d+$/.test(version) ? `${repoUrl}/releases/tag/v${version}` : null;
 }
 
 /** Small, muted version label; links to the release page when there is one. */

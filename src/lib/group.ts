@@ -12,7 +12,14 @@ const MONTHS = ["January","February","March","April","May","June","July",
   "August","September","October","November","December"];
 
 /** Newest first; undated photos last, then by path. */
+/**
+ * Order within a group (and so in the photo view's previous/next): cataloged photos
+ * in catalog order, then uncataloged ones newest first, undated last, then by path.
+ */
 export function comparePhotos(a: Photo, b: Photo): number {
+  if (a.catalogOrder !== null && b.catalogOrder !== null) return a.catalogOrder - b.catalogOrder;
+  if (a.catalogOrder !== null) return -1;
+  if (b.catalogOrder !== null) return 1;
   if (a.date && b.date && a.date !== b.date) return a.date < b.date ? 1 : -1;
   if (a.date && !b.date) return -1;
   if (!a.date && b.date) return 1;

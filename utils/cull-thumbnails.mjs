@@ -9,11 +9,11 @@
 // under _thumbs/ left empty by the deletion are removed too. As a safeguard, nothing is
 // deleted if no images at all are found under the root (wrong --root, pCloud not mounted).
 import { readdir, rm, rmdir } from "node:fs/promises";
-import { homedir } from "node:os";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { listImages, thumbPath, THUMBS_DIR } from "./lib/index-lib.mjs";
+import { defaultImageRoot } from "./lib/site-config.mjs";
 
 /** Forward-slash paths (relative to root) of every non-dot file under _thumbs/, sorted. */
 async function listThumbFiles(root) {
@@ -76,7 +76,7 @@ export async function cullThumbnails(root, { del = false, log = console.log } = 
 
 async function main() {
   const { values } = parseArgs({ options: {
-    root: { type: "string", default: join(homedir(), "pCloud Drive", "Public Folder") },
+    root: { type: "string", default: defaultImageRoot() },
     delete: { type: "boolean", default: false },
   } });
   console.log(`Obsolete thumbnails in ${join(values.root, THUMBS_DIR)}`);

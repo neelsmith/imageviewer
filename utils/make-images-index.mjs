@@ -7,13 +7,13 @@
 // Files already in images.cex are not re-read unless --refresh is given, so
 // reruns only touch new photos (each read downloads part of the file from pCloud).
 import { open, readFile, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import exifr from "exifr";
 import { imageSize } from "image-size";
 import { listImages, exifDateToIso, displaySize, serialize, parseExisting } from "./lib/index-lib.mjs";
+import { defaultImageRoot } from "./lib/site-config.mjs";
 import { Geocoder } from "./lib/geocode.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -112,7 +112,7 @@ export async function buildIndex({ root, existingText = "", refresh = false, geo
 
 async function main() {
   const { values } = parseArgs({ options: {
-    root: { type: "string", default: join(homedir(), "pCloud Drive", "Public Folder") },
+    root: { type: "string", default: defaultImageRoot() },
     out: { type: "string", default: join(here, "..", "data", "images.cex") },
     cache: { type: "string", default: join(here, "geocache.json") },
     refresh: { type: "boolean", default: false },

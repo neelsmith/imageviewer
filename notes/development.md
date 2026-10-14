@@ -1,5 +1,22 @@
 # Development guide
 
+## Site settings (`src/site.config.json`, gitignored)
+
+```sh
+cp src/site.config.example.json src/site.config.json   # once per clone/machine, then edit
+```
+
+| key | used by | |
+|---|---|---|
+| `imageBase` | apps (baked in at build) | pCloud Public Folder URL |
+| `dataBase` | apps (baked in) | URL of `data/`; `?branch=` swaps the branch if it's raw.githubusercontent.com |
+| `repoUrl` | apps (baked in) | version label links to `<repoUrl>/releases/tag/vX.Y.Z`; omit for no link |
+| `localImageRoot` | utils/ scripts only | default `--root`; `~` allowed; falls back to `~/pCloud Drive/Public Folder` |
+
+`npm run build`/`dev` stop with a clear message if the file is missing, invalid, or still has
+`YOUR-…` placeholders. Tests always use the example file. Not a secret: the URLs are visible
+in the published HTML.
+
 ## Web app (`src/`)
 
 ```sh

@@ -248,3 +248,30 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - 77 Vitest pass, typecheck clean. Browser check of all three built pages: date shown;
   invalid text and missing file → app version only.
 - No data/last-updated.txt created (Neel sets it). Not committed; app change → version bump.
+
+## 2026-10-14 — session 18: configurable site settings
+
+- (Sessions 13–17 happened elsewhere; re-read the repo first: 3 apps, cull-thumbnails,
+  data/last-updated.txt, per-catalog passwords.)
+- `src/site.config.json` (gitignored) + committed `src/site.config.example.json`. Keys:
+  imageBase, dataBase, repoUrl (optional), localImageRoot (optional, utils only).
+  `build/site-config.ts` validates (http(s) URLs, no YOUR- placeholders, every problem
+  listed) and vite.config injects `__SITE_CONFIG__` (local path never baked in). Tests use
+  the example file (process.env.VITEST).
+- lib/config.ts: DEFAULTS from config; `withBranch()` swaps the branch only for
+  raw.githubusercontent.com URLs. lib/version.ts: REPO_URL from config; no link if unset.
+- utils: lib/site-config.mjs `defaultImageRoot()` for images-index, thumbnails,
+  cull-thumbnails (--root still overrides).
+- Created Neel's src/site.config.json with the previous hard-coded values, so builds are
+  unchanged. Added main-private-catalogs.ts to tsconfig include (was not type-checked).
+- 84 Vitest + 35 node:test pass; all 3 built pages contain the configured URLs, no
+  placeholders, no local path. Not committed; app change → version bump.
+
+## 2026-10-14 — session 19: catalog order in the grid
+
+- Neel: "in the lightbox display, respect the order of images in the catalog" (he uses
+  "lightbox" for the thumbnail grid). `Photo.catalogOrder` (first row wins for duplicate
+  paths); `comparePhotos` puts cataloged photos in catalog order within each group, then
+  uncataloged ones newest first. Group order unchanged. Photo-view previous/next follows.
+- 86 Vitest pass; browser check with a catalog deliberately out of date order: grid and
+  previous/next follow the catalog. Not committed; app change → version bump.
