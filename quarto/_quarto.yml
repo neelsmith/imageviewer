@@ -9,7 +9,7 @@ date: last-modified
 format:
   html:
     theme:
-      - cosmo
+      - minty
       - brand
     toc: true
 
