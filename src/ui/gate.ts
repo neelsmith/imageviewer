@@ -4,7 +4,7 @@ import { checkPassword, isAuthEnabled, isRemembered, remember, type AuthConfig }
 export interface GateOptions {
   /** Heading (default "Image Viewer"). */
   title?: string;
-  /** localStorage key for "remember on this device" (default: the private.html key). */
+  /** localStorage key for "remember on this device" (default: the family.html key). */
   storageKey?: string;
   /** When set, a button with this text resolves the gate with false. */
   cancelLabel?: string;

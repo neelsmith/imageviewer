@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { startApp } from "../ui/app";
 import { buildPhotos } from "../ui/load";
 
-// UI flow test for the "Cataloged images only" toggle (private.html).
+// UI flow test for the "Cataloged images only" toggle (family.html).
 const CAT = "path|caption|credits|license|tags\na.jpg|A|||x\n";
 const IDX = "path|date|lat|lon|city|region|country|width|height\na.jpg|||||||1|1\nb.jpg|||||||1|1\nc.jpg|||||||1|1\n";
 const cfg = { imageBase: "https://h/", dataBase: "https://d/" };
@@ -13,7 +13,7 @@ describe("Cataloged images only toggle", () => {
   let root: HTMLElement;
   beforeEach(() => {
     document.body.innerHTML = "";
-    history.replaceState(null, "", "/private.html");
+    history.replaceState(null, "", "/family.html");
     root = document.createElement("div");
     document.body.append(root);
   });
@@ -37,7 +37,7 @@ describe("Cataloged images only toggle", () => {
   });
 
   it("restores the unticked state from the URL", async () => {
-    history.replaceState(null, "", "/private.html#all=1");
+    history.replaceState(null, "", "/family.html#all=1");
     startApp(root, cfg, { catalogToggle: true, load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
     await flush();
     expect(root.querySelector<HTMLInputElement>(".toggle input")!.checked).toBe(false);
@@ -129,7 +129,7 @@ describe("photo links (#photo=<path>)", () => {
   });
 
   it("explains a link to a photo that is hidden or missing", async () => {
-    history.replaceState(null, "", "/private.html#photo=b.jpg");
+    history.replaceState(null, "", "/family.html#photo=b.jpg");
     start({ catalogToggle: true });
     await flush();
     expect(lightbox().hidden).toBe(true);
@@ -205,5 +205,26 @@ describe("year / place drop-downs", () => {
     const info = document.querySelector(".lightbox .info")!.textContent!;
     expect(info).toContain("Year1986");
     expect(info).toContain("PlacePriene");
+  });
+});
+
+describe("default grouping", () => {
+  const checked = (root: HTMLElement) =>
+    root.querySelector('.seg button[aria-checked="true"]')?.getAttribute("data-mode");
+  const open = async (url: string) => {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", url);
+    const root = document.createElement("div");
+    document.body.append(root);
+    startApp(root, cfg, { load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
+    await flush();
+    return root;
+  };
+  it("is Location when the URL doesn't name one", async () => {
+    expect(checked(await open("/"))).toBe("location");
+  });
+  it("follows #group= from the URL, and ignores unknown values", async () => {
+    expect(checked(await open("/#group=date"))).toBe("date");
+    expect(checked(await open("/#group=nonsense"))).toBe("location");
   });
 });

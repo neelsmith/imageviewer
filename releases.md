@@ -3,6 +3,9 @@
 
 Current version: **1.8.0**
 
+**1.8.1**, *?*: tweak default image grouping; fix a minor warning in build process.
+
+
 **1.8.0**, *Oct. 14, 2026*:  
 
 - adds new `image-viewer.html` app for use with images in a local file system.

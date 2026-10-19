@@ -7,6 +7,9 @@ import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
 import type { ImageProvider } from "./local/images";
 
+/** Grouping shown when the URL doesn't name one (#group=date|location|tag). */
+export const DEFAULT_MODE: GroupMode = "location";
+
 const MODES: { mode: GroupMode; label: string }[] = [
   { mode: "date", label: "Date" },
   { mode: "location", label: "Location" },
@@ -65,8 +68,8 @@ export interface AppHandle {
 export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): AppHandle {
   let all: Photo[] = [];
   let warnings: string[] = [];
-  let mode: GroupMode = (readHash(location.hash).group as GroupMode) || "date";
-  if (!MODES.some((m) => m.mode === mode)) mode = "date";
+  let mode: GroupMode = (readHash(location.hash).group as GroupMode) || DEFAULT_MODE;
+  if (!MODES.some((m) => m.mode === mode)) mode = DEFAULT_MODE;
   let query = "";
   let catalogedOnly = !!opts.catalogToggle && readHash(location.hash).all !== "1";
   let visible: Photo[] = []; // flattened order for lightbox navigation

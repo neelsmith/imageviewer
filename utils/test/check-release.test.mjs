@@ -4,7 +4,7 @@ import { checkRelease, hasVersion } from "../check-release.mjs";
 
 const built = (v) => `<script>const O=\`${v}\`;</script>`; // as the minifier writes it
 const ok = { tag: "v1.0.0", pkgVersion: "1.0.0", existingTags: [],
-  pages: { "docs/index.html": built("1.0.0"), "docs/private.html": built("1.0.0") } };
+  pages: { "docs/index.html": built("1.0.0"), "docs/family.html": built("1.0.0") } };
 
 test("passes when tag, package.json and built pages agree", () => {
   assert.deepEqual(checkRelease(ok), []);
@@ -24,9 +24,9 @@ test("hasVersion accepts any quote style but not a -dev build", () => {
 
 test("catches stale, dev or missing pages", () => {
   const p = checkRelease({ ...ok, pages: { "docs/index.html": built("0.9.0"),
-    "docs/private.html": built("1.0.0-dev"), "docs/x.html": null } });
+    "docs/family.html": built("1.0.0-dev"), "docs/x.html": null } });
   assert.equal(p.length, 3);
   assert.match(p[0], /index\.html wasn't built/);
-  assert.match(p[1], /private\.html wasn't built/);
+  assert.match(p[1], /family\.html wasn't built/);
   assert.match(p[2], /missing/);
 });
