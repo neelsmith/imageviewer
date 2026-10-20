@@ -13,7 +13,7 @@ describe("buildPhotos", () => {
     const r = buildPhotos(CAT, IDX, "https://h/", { catalogedOnly: true, catalogName: "catalogs/mss.cex" });
     expect(r.photos.map((p) => p.path).sort()).toEqual(["x/1.jpg", "x/9.jpg"]);
     expect(r.photos.find((p) => p.path === "x/1.jpg")?.date).toBe("2019-03-05T13:27:41");
-    expect(r.warnings).toContain("1 cataloged image(s) not found in images.cex.");
+    expect(r.warnings).toContainEqual({ text: "1 cataloged image(s) not found in images.cex.", items: ["x/9.jpg — Missing"] });
   });
   it("names the chosen catalog when it can't be loaded", () => {
     const r = buildPhotos(null, IDX, "https://h/", { catalogedOnly: true, catalogName: "catalogs/mss.cex" });

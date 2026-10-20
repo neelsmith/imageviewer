@@ -376,3 +376,10 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   browse.html can't be deleted from here (no permission) — Neel to delete.
 - Dev server: no page at "/" any more; use /catalogs.html.
 - src/local.html had been deleted (git showed ' D'); restored from HEAD with git show (no git index changes). Build passes again.
+
+## 2026-10-21 — session 28: unfoldable list of missing catalog entries
+
+- Notices can now carry a list (ui/load.ts `Notice`, `missingNotice`): the 'N … not found'
+  warning (catalog apps: images.cex; local/www-browse: folder) is a folded <details>; 'Show list'
+  unfolds each missing path with its caption. All five apps.
+- 129 Vitest pass; browser check of catalogs.html folded/unfolded. App change (Neel already at 2.0.0).

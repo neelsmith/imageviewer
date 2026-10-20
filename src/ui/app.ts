@@ -1,7 +1,7 @@
 import type { AppConfig } from "../lib/config";
 import type { Photo } from "../lib/types";
 import { facetValues, groupPhotos, selectPhotos, placeLabel, type Facet, type GroupMode, type PhotoGroup } from "../lib/group";
-import { buildPhotos, loadRemote, type LoadResult } from "./load";
+import { buildPhotos, loadRemote, type LoadResult, type Notice } from "./load";
 import { readHash, withHash } from "../lib/hash";
 import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
@@ -113,7 +113,7 @@ export interface AppHandle {
 
 export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): AppHandle {
   let all: Photo[] = [];
-  let warnings: string[] = [];
+  let warnings: Notice[] = [];
   let mode: GroupMode = (readHash(location.hash).group as GroupMode) || DEFAULT_MODE;
   if (!MODES.some((m) => m.mode === mode)) mode = DEFAULT_MODE;
   let query = "";
@@ -456,7 +456,11 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   }
 
   function renderNotices(failed: boolean) {
-    const items: Node[] = warnings.map((w) => el("li", {}, w));
+    // A notice with a list (e.g. missing photos) unfolds on click to show the list.
+    const items: Node[] = warnings.map((w) => typeof w === "string" ? el("li", {}, w)
+      : el("li", {}, el("details", { class: "notice-details" },
+        el("summary", {}, w.text, el("span", { class: "notice-more" }, " Show list")),
+        el("ul", {}, ...w.items.map((i) => el("li", {}, el("code", {}, i)))))));
     const box: Node[] = items.length ? [el("ul", {}, ...items)] : [];
     if (failed && opts.localFallback !== false) {
       const input = el("input", { type: "file", accept: ".cex,.txt", multiple: "" });

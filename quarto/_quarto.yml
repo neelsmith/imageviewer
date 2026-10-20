@@ -2,7 +2,7 @@ project:
   type: website
   output-dir: quarto_build
 
-version: "2.0.0"
+version: "2.0.1"
 metadata:
   date: today
   

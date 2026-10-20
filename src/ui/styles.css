@@ -170,3 +170,11 @@ a.version:hover { text-decoration: underline; opacity: 1; }
 .lightbox .selections .sel-num { background: #ffd23f; color: #111; font-weight: 600; min-width: 24px; }
 .sel-hint { color: #999; font-size: 13px; margin: 0 0 6px; }
 .sel-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+
+/* Notices with an unfoldable list (e.g. catalog entries whose image is missing) */
+.notice-details summary { cursor: pointer; list-style-position: outside; }
+.notice-details .notice-more { color: var(--accent); font-size: 13px; }
+.notice-details[open] .notice-more { display: none; }
+.notice-details ul { margin: 6px 0 2px; padding-left: 18px; max-height: 40vh; overflow: auto; }
+.notice-details li { list-style: disc; }
+.notice-details code { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
