@@ -54,7 +54,7 @@
     "href": "index.html",
     "title": "Image viewers",
     "section": "",
-    "text": "The github project at https://github.com/neelsmith/imageviewer hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an example installation.\nThe apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images.\nLearn more about:\n\nbrowsing local images\nannotating images with a catalog\ncanonically citing images\nsharing images on the web"
+    "text": "The imageviewer github repository hosts apps for light-table and zoomable/pannable display of individual images. All the apps are implemented in self-contained HTML files that can be run locally or served on the web. They all support optionally cataloging images in simple delimited-text files.\nIn the light-table view, users can filter the selection by cataloged data, or by date and location data encoded in the images.\n\n\n\nLight-table view\n\n\nIn the zoomable/pannable view of individual images, users can select and save regions of interest. The apps’ URLs allow users to address regions of interest with an HTML roi parameter, like this example.\n\n\n\nImage with selected regions of interest\n\n\nThe github pages for imageviewer hosts an example installation of the catalogs.html app for viewing images by catalog.\nLearn more about:\n\nbrowsing local images\nannotating images with a catalog\ncanonically citing images\nsharing images on the web"
   },
   {
     "objectID": "citable/index.html",
