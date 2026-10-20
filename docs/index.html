@@ -44,6 +44,9 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-209258432f336cc574c0f847bd0a7210.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -173,8 +176,22 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>The github project at <a href="https://github.com/neelsmith/imageviewer">https://github.com/neelsmith/imageviewer</a> hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an <a href="https://neelsmith.github.io/imageviewer/catalogs.html">example installation</a>.</p>
-<p>The apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images.</p>
+<p>The <a href="https://github.com/neelsmith/imageviewer"><code>imageviewer</code> github repository</a> hosts apps for light-table and zoomable/pannable display of individual images. All the apps are implemented in self-contained HTML files that can be run locally or served on the web. They all support optionally cataloging images in simple delimited-text files.</p>
+<p>In the light-table view, users can filter the selection by cataloged data, or by date and location data encoded in the images.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="./imgs/lighttable.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Light-table view"><img src="./imgs/lighttable.png" class="img-fluid figure-img" alt="Light-table view"></a></p>
+<figcaption>Light-table view</figcaption>
+</figure>
+</div>
+<p>In the zoomable/pannable view of individual images, users can select and save regions of interest. The apps’ URLs allow users to address regions of interest with an HTML <code>roi</code> parameter, like <a href="https://neelsmith.github.io/imageviewer/catalogs.html#catalog=data%2Fcatalogs%2Flips7.cex&amp;photo=leiden-pliny%2FIMG_1203.jpeg&amp;roi=0.4134%2C0.3915%2C0.1681%2C0.0205%3B0.4103%2C0.5318%2C0.1465%2C0.0342">this example</a>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="./imgs/citable.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Image with selected regions of interest"><img src="./imgs/citable.png" class="img-fluid figure-img" alt="Image with selected regions of interest"></a></p>
+<figcaption>Image with selected regions of interest</figcaption>
+</figure>
+</div>
+<p>The github pages for <code>imageviewer</code> hosts an example installation of the <a href="https://neelsmith.github.io/imageviewer/catalogs.html">catalogs.html</a> app for viewing images by catalog.</p>
 <p>Learn more about:</p>
 <ul>
 <li><a href="./local.html">browsing local images</a></li>
@@ -600,6 +617,38 @@ ul.task-list li input[type="checkbox"] {
     </div>
   </div>
 </footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 
