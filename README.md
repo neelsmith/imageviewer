@@ -13,5 +13,10 @@ Apps for light-table and zoomable/pannable display of individual images, impleme
 
 ## Available apps
 
-When
+In the `src` directory, `npm run build` builds the following apps:
 
+- `local.html`: browse and catalog images in your local file system
+- `private.html`: password-protected image browser
+- `catalogs.html`: browse images from catalogs
+- `private-catalogs.html`: browse images from catalogs, optionally password-protected by catalog
+- `www.browse.html`: browse images on a web server
