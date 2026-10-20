@@ -59,6 +59,7 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
       load: () => loadCatalog(cfg, chosen.file, catalogUrl(cfg.dataBase, chosen.file)),
       toolbar: [switcher(chosen)],
       localFallback: false,
+      exportName: chosen.file,
       onLock: chosen.auth ? () => { forget(undefined, catalogKey(chosen.file)); route(); } : undefined,
     });
   }

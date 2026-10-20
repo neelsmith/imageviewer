@@ -18,5 +18,6 @@ passwordGate(root, authConfig).then(() =>
   startApp(root, cfg, {
     onLock: isAuthEnabled(authConfig) ? () => { forget(); location.reload(); } : undefined,
     catalogToggle: true,
+    exportName: "catalog.cex",
   }),
 );

@@ -320,3 +320,15 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - 103 Vitest + 35 utils tests pass; rebuilt src/dist/. Stale src/dist/private.html left (no delete permission) — Neel can delete it.
 - Neel: replace docs/…/private.html with family.html; old links/bookmarks will break.
 - Vite 'configLoader: native' warnings fixed: vite.config.ts imports ./build/*.ts with extensions; tsconfig allowImportingTsExtensions. Build and tests now warning-free (103 pass).
+
+## 2026-10-20 — session 24: Export + Captions (grid, all four apps)
+
+- Neel's terms: "light table"/"lightbox" = the thumbnail grid.
+- Export button (bar): downloads a .cex of the photos currently shown (filters, toggle,
+  year/place, group order; one row per path; uncataloged photos as path-only rows; year/place
+  columns only if used; "|"/newlines → spaces). lib/export.ts photosToCex + exportFileName;
+  name "<catalog or folder>-selection.cex" via startApp option `exportName`.
+- Captions checkbox (bar), default off, hash `captions=1`: caption under each tile, max 3 lines.
+- Tests: 108 Vitest (export round-trip, UI download honouring filter/order, captions toggle).
+  Browser check: download z-selection.cex content correct; caption layout OK.
+- App change → version bump before release.

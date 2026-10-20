@@ -5,6 +5,7 @@ import { buildPhotos, loadRemote, type LoadResult } from "./load";
 import { readHash, withHash } from "../lib/hash";
 import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
+import { exportFileName, photosToCex } from "../lib/export";
 import type { ImageProvider } from "./local/images";
 
 /** Grouping shown when the URL doesn't name one (#group=date|location|tag). */
@@ -58,6 +59,8 @@ export interface AppOptions {
   banner?: HTMLElement;
   /** Mark photos missing from the catalog (dot on tile, "Not in catalog"). Default true. */
   markUncataloged?: boolean;
+  /** Used to name the Export download: "<name>-selection.cex" (e.g. the catalog's file name). */
+  exportName?: string;
 }
 
 export interface AppHandle {
@@ -81,10 +84,32 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   const facetKey: Record<Facet, string> = { year: "year", placeName: "place" };
 
   const count = el("span", { class: "count" });
+  // Export: the catalog rows of the photos currently shown, as a .cex download.
+  const exportBtn = el("button", { type: "button", class: "export",
+    title: "Download the catalog entries for the photos shown (.cex)" }, "Export");
+  exportBtn.addEventListener("click", () => {
+    const blob = new Blob([photosToCex(visible)], { type: "text/plain;charset=utf-8" });
+    const a = el("a", { href: URL.createObjectURL(blob), download: exportFileName(opts.exportName ?? "") });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  });
+  // Captions under the grid tiles (off by default; kept in the hash as captions=1).
+  let showCaptions = readHash(location.hash).captions === "1";
+  const captionBox = el("input", { type: "checkbox" });
+  captionBox.checked = showCaptions;
+  captionBox.addEventListener("change", () => {
+    showCaptions = captionBox.checked;
+    history.replaceState(history.state, "",
+      withHash(location.hash, { captions: showCaptions ? "1" : null }) || location.pathname + location.search);
+    main.classList.toggle("with-captions", showCaptions);
+  });
   const search = el("input", { type: "search", placeholder: "Filter…", "aria-label": "Filter photos" });
   const seg = el("div", { class: "seg", role: "radiogroup", "aria-label": "Group by" });
   const notices = el("div", { class: "notices" });
   const main = el("main", { class: "groups" });
+  main.classList.toggle("with-captions", readHash(location.hash).captions === "1");
   function facetSelect(facet: Facet, label: string, anyLabel: string) {
     const sel = el("select", { class: "facet-select", "aria-label": label, hidden: "" });
     sel.dataset.facet = facet;
@@ -128,7 +153,8 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     toggle.push(el("label", { class: "toggle" }, box, " Cataloged images only"));
   }
   const header = el("header", { class: "bar" },
-    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, yearSel, placeSel, ...toggle, search, count, versionInfo());
+    el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, yearSel, placeSel, ...toggle,
+    el("label", { class: "toggle" }, captionBox, " Captions"), search, count, exportBtn, versionInfo());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);
@@ -253,7 +279,8 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
 
   function tile(p: Photo, index: number) {
     const img = el("img", { alt: p.caption || p.path, decoding: "async" });
-    const b = el("button", { class: "tile", type: "button", title: p.caption || p.path }, img);
+    const b = el("button", { class: "tile", type: "button", title: p.caption || p.path }, img,
+      el("span", { class: "tile-caption" }, p.caption)); // shown when "Captions" is ticked
     if (!p.cataloged && opts.markUncataloged !== false) b.classList.add("uncataloged");
     if (opts.images) {
       const imgs = opts.images;

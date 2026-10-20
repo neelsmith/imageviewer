@@ -3,13 +3,13 @@ title: "Image viewers"
 ---
 
 
-The github project at [https://github.com/neelsmith/imageviewer](https://github.com/neelsmith/imageviewer) hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an [example installation](https://neelsmith.github.io/imageviewer/).
+The github project at [https://github.com/neelsmith/imageviewer](https://github.com/neelsmith/imageviewer) hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an [example installation](https://neelsmith.github.io/imageviewer/catalogs.html).
 
 The apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images.
 
 
 ## Using the image viewer app for local files
 
-`image-viewer.html` is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.
+`local-image-viewer.html` is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.
 
 See [this page](./cataloging/) for information about how to add cataloging information for your local images.

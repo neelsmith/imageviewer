@@ -1,9 +1,19 @@
 # Version info
 
 
-Current version: **1.8.0**
+Current version: **1.9.0**
 
-**1.8.1**, *?*: tweak default image grouping; fix a minor warning in build process.
+**1.9.0**, *Oct. 20, 2026*: 
+Additions:
+
+- export a catalog for selected images in light table
+- optionally show captions in light table view
+
+Fixes:
+
+- tweak default image grouping
+- fix a minor warning in build process
+
 
 
 **1.8.0**, *Oct. 14, 2026*:  
