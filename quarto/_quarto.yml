@@ -26,11 +26,17 @@ website:
     background: primary
     search: true
     left:
-      - text: "Home"
-        file: index.qmd
-      - text: "Cataloging images"
-        file: cataloging/index.qmd          
-     
+      - text: "Local images"
+        file: local.qmd                 
+      - text: "Catalogs"
+        file: cataloging/index.qmd
+      - text: "Citation"
+        file: citable/index.qmd
+      - text: "Public servers"
+        file: servers.qmd          
+      - text: "Reference"
+        file: reference/index.qmd          
+          
 
     right:
       - icon: person-circle
@@ -41,3 +47,17 @@ website:
             href: https://neelsmith.github.io/avocational/
         aria-label: Home 
 
+  sidebar:
+    - title: "Servers"
+      contents:
+        - servers.qmd
+        - "---"
+        - pcloud/index.qmd
+        - www/index.qmd
+    - title: "Reference"
+      contents:
+        - reference/index.qmd
+        - "---"
+        - reference/build/index.qmd
+        - reference/sysadmin/index.qmd
+        

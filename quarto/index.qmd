@@ -7,9 +7,9 @@ The github project at [https://github.com/neelsmith/imageviewer](https://github.
 
 The apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images.
 
+Learn more about:
 
-## Using the image viewer app for local files
-
-`local-image-viewer.html` is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.
-
-See [this page](./cataloging/) for information about how to add cataloging information for your local images.
+- [browsing local images](./local.qmd)
+- [annotating images with a catalog](./cataloging/)
+- [canonically citing images](./citable/)
+- [sharing images on the web](./servers.qmd)

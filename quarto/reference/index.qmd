@@ -1,0 +1,7 @@
+---
+title: Technical reference
+---
+
+
+- [how to build the apps](./build/)
+- managing public images: [summary reference](./sysadmin/)

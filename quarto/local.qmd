@@ -1,0 +1,13 @@
+---
+title: "Browsing and annotating local images"
+---
+
+
+
+
+::: {.callout-warning}
+Version 2.0 documentation is not yet in place.
+:::
+
+
+`local-image-viewer.html` is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.
