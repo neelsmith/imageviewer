@@ -21,17 +21,90 @@
     "text": "Example: optional fields\nYou may optionally include additional columns for year and place.\npath|caption|credits|license|tags|year|place\nleiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden, manuscripts|2019|Leiden, NL|"
   },
   {
+    "objectID": "reference/sysadmin/index.html",
+    "href": "reference/sysadmin/index.html",
+    "title": "Summary reference: managing public services",
+    "section": "",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.",
+    "crumbs": [
+      "Reference",
+      "Summary reference: managing public services"
+    ]
+  },
+  {
+    "objectID": "local.html",
+    "href": "local.html",
+    "title": "Browsing and annotating local images",
+    "section": "",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.\n\n\nlocal-image-viewer.html is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations."
+  },
+  {
+    "objectID": "www/index.html",
+    "href": "www/index.html",
+    "title": "Using imageviewer with a web server",
+    "section": "",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.",
+    "crumbs": [
+      "Public servers",
+      "Using `imageviewer` with a web server"
+    ]
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Image viewers",
     "section": "",
-    "text": "The github project at https://github.com/neelsmith/imageviewer hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an example installation.\nThe apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images."
+    "text": "The github project at https://github.com/neelsmith/imageviewer hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an example installation.\nThe apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images.\nLearn more about:\n\nbrowsing local images\nannotating images with a catalog\ncanonically citing images\nsharing images on the web"
   },
   {
-    "objectID": "index.html#using-the-image-viewer-app-for-local-files",
-    "href": "index.html#using-the-image-viewer-app-for-local-files",
-    "title": "Image viewers",
-    "section": "Using the image viewer app for local files",
-    "text": "Using the image viewer app for local files\nlocal-image-viewer.html is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.\nSee this page for information about how to add cataloging information for your local images."
+    "objectID": "citable/index.html",
+    "href": "citable/index.html",
+    "title": "Canonically citing images and regions of interest",
+    "section": "",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place."
+  },
+  {
+    "objectID": "servers.html",
+    "href": "servers.html",
+    "title": "Serving images on the web",
+    "section": "",
+    "text": "pCloud\nweb servers",
+    "crumbs": [
+      "Public servers",
+      "Serving images on the web"
+    ]
+  },
+  {
+    "objectID": "pcloud/index.html",
+    "href": "pcloud/index.html",
+    "title": "Sharing images from pCloud’s Public Folder",
+    "section": "",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.",
+    "crumbs": [
+      "Public servers",
+      "Sharing images from pCloud's `Public Folder`"
+    ]
+  },
+  {
+    "objectID": "reference/index.html",
+    "href": "reference/index.html",
+    "title": "Technical reference",
+    "section": "",
+    "text": "how to build the apps\nmanaging public images: summary reference",
+    "crumbs": [
+      "Reference",
+      "Technical reference"
+    ]
+  },
+  {
+    "objectID": "reference/build/index.html",
+    "href": "reference/build/index.html",
+    "title": "How to build imageviewer’s apps",
+    "section": "",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.",
+    "crumbs": [
+      "Reference",
+      "How to build `imageviewer`'s apps"
+    ]
   }
 ]
