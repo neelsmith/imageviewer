@@ -1,0 +1,7 @@
+---
+title: "Canonically citing images and regions of interest"
+---
+
+::: {.callout-warning}
+Version 2.0 documentation is not yet in place.
+:::

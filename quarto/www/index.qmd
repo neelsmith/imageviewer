@@ -1,0 +1,9 @@
+---
+title: "Using `imageviewer` with a web server"
+---
+
+
+
+::: {.callout-warning}
+Version 2.0 documentation is not yet in place.
+:::
