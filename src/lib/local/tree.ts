@@ -56,10 +56,39 @@ export function dirFromHandle(handle: DirHandleLike, path = ""): LocalDir {
   };
 }
 
-// ---- Upload-style folder control ----
+// ---- A flat list of paths (upload-style folder control, web index) ----
 
-interface Node { dirs: Map<string, Node>; files: Map<string, File> }
+interface Node { dirs: Map<string, Node>; files: Map<string, () => Promise<File>> }
 const newNode = (): Node => ({ dirs: new Map(), files: new Map() });
+
+/**
+ * Build a tree from a flat list of forward-slash paths relative to the root, each with
+ * a way to get its File. Hidden/skipped segments are left out.
+ */
+export function dirFromPaths(rootName: string, entries: { path: string; file: () => Promise<File> }[]): LocalDir {
+  const root = newNode();
+  for (const { path, file } of entries) {
+    const parts = path.split("/");
+    if (parts.some(isSkipped)) continue;
+    let node = root;
+    for (const part of parts.slice(0, -1)) {
+      if (!node.dirs.has(part)) node.dirs.set(part, newNode());
+      node = node.dirs.get(part)!;
+    }
+    node.files.set(parts[parts.length - 1], file);
+  }
+  const make = (node: Node, name: string, path: string): LocalDir => ({
+    name,
+    path,
+    async list() {
+      return {
+        dirs: [...node.dirs].map(([n, d]) => make(d, n, join(path, n))).sort(byName),
+        files: [...node.files].map(([n, f]) => ({ name: n, path: join(path, n), file: f })).sort(byName),
+      };
+    },
+  });
+  return make(root, rootName, "");
+}
 
 /**
  * Build a tree from the files of an <input webkitdirectory>. Every path starts with
@@ -69,29 +98,11 @@ export function dirFromFileList(list: ArrayLike<File>): LocalDir | null {
   const files = Array.from(list);
   if (!files.length) return null;
   const rootName = (files[0].webkitRelativePath || files[0].name).split("/")[0];
-  const root = newNode();
-  for (const f of files) {
+  return dirFromPaths(rootName, files.map((f) => {
     const parts = (f.webkitRelativePath || f.name).split("/");
     if (parts.length > 1) parts.shift(); // drop the root folder's own name
-    if (parts.some(isSkipped)) continue;
-    let node = root;
-    for (const part of parts.slice(0, -1)) {
-      if (!node.dirs.has(part)) node.dirs.set(part, newNode());
-      node = node.dirs.get(part)!;
-    }
-    node.files.set(parts[parts.length - 1], f);
-  }
-  const make = (node: Node, name: string, path: string): LocalDir => ({
-    name,
-    path,
-    async list() {
-      return {
-        dirs: [...node.dirs].map(([n, d]) => make(d, n, join(path, n))).sort(byName),
-        files: [...node.files].map(([n, f]) => ({ name: n, path: join(path, n), file: async () => f })).sort(byName),
-      };
-    },
-  });
-  return make(root, rootName, "");
+    return { path: parts.join("/"), file: async () => f };
+  }));
 }
 
 // ---- Drag and drop ----

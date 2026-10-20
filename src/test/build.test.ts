@@ -14,22 +14,24 @@ const selfContained = (html: string) => {
 };
 
 describe("production build", () => {
-  it("emits four self-contained pages: index.html, family.html, private-catalogs.html, local.html", async () => {
+  it("emits five self-contained pages: catalogs.html, private.html, private-catalogs.html, www-browse.html, local.html", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "iv-build-"));
     const common = { root: resolve(__dirname, ".."), configFile: resolve(__dirname, "../vite.config.ts"),
       logLevel: "silent" as const };
     await build({ ...common, build: { outDir, emptyOutDir: true } });
-    await build({ ...common, mode: "family", build: { outDir, emptyOutDir: false } });
+    await build({ ...common, mode: "private", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "private-catalogs", build: { outDir, emptyOutDir: false } });
+    await build({ ...common, mode: "www-browse", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "local-folders", build: { outDir, emptyOutDir: false } });
-    expect((await readdir(outDir)).sort()).toEqual(["family.html", "index.html", "local.html", "private-catalogs.html"]);
+    expect((await readdir(outDir)).sort())
+      .toEqual(["catalogs.html", "local.html", "private-catalogs.html", "private.html", "www-browse.html"]);
 
-    const priv = await readFile(join(outDir, "family.html"), "utf8");
+    const priv = await readFile(join(outDir, "private.html"), "utf8");
     selfContained(priv);
     expect(priv).toContain("Remember on this device");
     expect(priv).not.toContain("catalog_of_catalogs.cex");
 
-    const index = await readFile(join(outDir, "index.html"), "utf8");
+    const index = await readFile(join(outDir, "catalogs.html"), "utf8");
     selfContained(index);
     expect(index).toContain("catalog_of_catalogs.cex");
     expect(index).not.toContain("catalog_of_private_catalogs.cex");
@@ -46,11 +48,16 @@ describe("production build", () => {
     for (const html of [index, priv, pc]) expect(html).not.toContain("_heif_context_alloc");
     expect(local.length).toBeGreaterThan(1_500_000);
 
+    const browse = await readFile(join(outDir, "www-browse.html"), "utf8");
+    selfContained(browse);
+    expect(browse).toContain("images.cex");
+    expect(browse).toContain("_heif_context_alloc"); // decoder for HEIC in the photo view
+
     // Release version (no "-dev") is baked into every page.
-    for (const html of [index, priv, pc, local]) {
+    for (const html of [index, priv, pc, local, browse]) {
       // The minifier may quote it with ", ' or `.
       expect(html).toMatch(new RegExp(`["'\`]${pkg.version.replace(/\./g, "\\.")}["'\`]`));
       expect(html).not.toContain(`${pkg.version}-dev`);
     }
-  }, 120_000);
+  }, 180_000);
 });

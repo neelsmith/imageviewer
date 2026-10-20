@@ -1,11 +1,11 @@
 {
   "name": "imageviewer",
   "private": true,
-  "version": "1.8.1",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build --mode family && vite build --mode private-catalogs && vite build --mode local-folders",
+    "build": "vite build && vite build --mode private && vite build --mode private-catalogs && vite build --mode www-browse && vite build --mode local-folders",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

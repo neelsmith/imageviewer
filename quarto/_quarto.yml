@@ -2,8 +2,10 @@ project:
   type: website
   output-dir: quarto_build
 
-version: "1.9.0"
-
+version: "2.0.0"
+metadata:
+  date: today
+  
 execute:
   freeze: auto
 date: last-modified  
@@ -18,7 +20,7 @@ format:
 website:
   title: "imageviewer"
   page-footer:
-    center: "Documentation for version **{{< meta version >}}**"
+    center: "`imageviewer` version **{{< meta version >}}**, website last updated {{< meta date >}}"
 
   navbar:
     background: primary

@@ -48,3 +48,17 @@ test("thumbPath", async () => {
   const { thumbPath } = await import("../lib/index-lib.mjs");
   assert.equal(thumbPath("leiden-pliny/IMG_1200.jpeg"), "_thumbs/leiden-pliny/IMG_1200.jpeg.jpg");
 });
+
+test("listCatalogs finds .cex files, skipping hidden, _thumbs and the index files", async () => {
+  const { mkdtemp, mkdir, writeFile } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { listCatalogs, catalogsText } = await import("../lib/index-lib.mjs");
+  const root = await mkdtemp(join(tmpdir(), "iv-cats-"));
+  for (const d of ["a/b", "_thumbs", ".git"]) await mkdir(join(root, d), { recursive: true });
+  for (const f of ["images.cex", "catalogs.cex", "catalog.cex", "a/mss.CEX", "a/b/x.cex", "_thumbs/t.cex", ".git/g.cex", "a/notes.txt"])
+    await writeFile(join(root, f), "path\n");
+  const cats = await listCatalogs(root, ["images.cex", "catalogs.cex"]);
+  assert.deepEqual(cats, ["a/b/x.cex", "a/mss.CEX", "catalog.cex"]);
+  assert.equal(catalogsText(cats), "path\na/b/x.cex\na/mss.CEX\ncatalog.cex\n");
+});

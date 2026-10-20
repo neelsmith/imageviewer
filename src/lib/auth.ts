@@ -44,7 +44,7 @@ export async function checkPassword(password: string, cfg: AuthConfig): Promise<
 }
 
 // "Remember me": store the hash itself, so changing the password logs everyone out.
-// family.html uses KEY; each password-protected catalog has its own key (catalogKey).
+// private.html uses KEY; each password-protected catalog has its own key (catalogKey).
 const KEY = "imageviewer.unlocked";
 
 /** Storage key for "remember on this device" for one catalog file. */

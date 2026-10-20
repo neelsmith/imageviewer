@@ -28,7 +28,7 @@ export function mergePhotos(
   const byPath = new Map<string, Photo>();
   const blank = (path: string): Photo => ({
     path, url: joinUrl(imageBase, path), thumb: thumbUrl(imageBase, path), caption: "", credits: "", license: "",
-    tags: [], year: "", placeName: "", date: "", lat: null, lon: null, place: null, width: null, height: null,
+    tags: [], year: "", placeName: "", urn: "", date: "", lat: null, lon: null, place: null, width: null, height: null,
     cataloged: false, catalogOrder: null, indexed: false,
   });
 

@@ -1,4 +1,4 @@
-// Private-catalogs app (private-catalogs.html): like index.html, but the menu comes from
+// Private-catalogs app (private-catalogs.html): like catalogs.html, but the menu comes from
 // data/catalog_of_private_catalogs.cex, whose catalogs can each have a password.
 import "./ui/styles.css";
 import { configFromSearch, DEFAULTS } from "./lib/config";

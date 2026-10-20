@@ -1,4 +1,4 @@
-// Catalog-chooser app (index.html): no password; shows only cataloged images
+// Catalog-chooser app (catalogs.html): no password; shows only cataloged images
 // from the catalog chosen in data/catalog_of_catalogs.cex.
 import "./ui/styles.css";
 import { configFromSearch, DEFAULTS } from "./lib/config";

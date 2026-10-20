@@ -12,6 +12,12 @@ export interface ImageProvider {
   placeholder(p: Photo): string | null;
   /** Full-image size if already known (from decoding the tile). */
   size(p: Photo): { w: number; h: number } | null;
+  /** If the tile URL fails to load: a second try (e.g. the original instead of a thumbnail). */
+  tileFallback?(p: Photo): Promise<string>;
+  /** Link for "Open original". */
+  originalUrl?(p: Photo): string;
+  /** Release object URLs etc. when the view goes away. */
+  dispose?(): void;
 }
 
 type Size = { w: number; h: number };

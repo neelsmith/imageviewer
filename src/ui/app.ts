@@ -6,6 +6,8 @@ import { readHash, withHash } from "../lib/hash";
 import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
 import { exportFileName, photosToCex } from "../lib/export";
+import { formatRoi, formatRois, parseRois, roiUrn, type Roi } from "../lib/roi";
+import { RoiLayer } from "./roi-layer";
 import type { ImageProvider } from "./local/images";
 
 /** Grouping shown when the URL doesn't name one (#group=date|location|tag). */
@@ -54,13 +56,54 @@ export interface AppOptions {
    * Images that aren't plain URLs (local.html): tiles are requested as they scroll into
    * view, and the photo view asks for the full image. `originalUrl` feeds "Open original".
    */
-  images?: ImageProvider & { originalUrl?(p: Photo): string };
+  images?: ImageProvider;
   /** Shown between the notices and the grid (local.html: subfolders). */
   banner?: HTMLElement;
   /** Mark photos missing from the catalog (dot on tile, "Not in catalog"). Default true. */
   markUncataloged?: boolean;
   /** Used to name the Export download: "<name>-selection.cex" (e.g. the catalog's file name). */
   exportName?: string;
+}
+
+/** Save text as a file (works from disk too). */
+function download(text: string, name: string) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+}
+
+/** Copy to the clipboard, with a fallback for browsers that refuse the Clipboard API. */
+export async function copyText(text: string): Promise<boolean> {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* fall back */ }
+  const ta = el("textarea", { readonly: "", style: "position:fixed;opacity:0" });
+  ta.value = text;
+  document.body.append(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch { /* no clipboard */ }
+  ta.remove();
+  return ok;
+}
+
+/**
+ * Region selections made in the photo view, kept while the page is open (across
+ * catalogs and folders), keyed by the photo's URN, URL or path.
+ */
+const selections = new Map<string, { photo: Photo; rois: Roi[] }>();
+const selectionKey = (p: Photo) => p.urn || p.url || p.path;
+
+/** Text for "Export selections": one CITE2 URN per region; photos without a URN listed as comments. */
+export function selectionsText(entries: { photo: Photo; rois: Roi[] }[]): string {
+  const lines: string[] = [];
+  const noUrn: string[] = [];
+  for (const { photo, rois } of entries) {
+    for (const r of rois) (photo.urn ? lines : noUrn).push(photo.urn ? roiUrn(photo.urn, r) : `// ${photo.path}@${formatRoi(r)}`);
+  }
+  if (noUrn.length) lines.push("// Photos without a urn (add a urn column to the catalog):", ...noUrn);
+  return lines.join("\n") + "\n";
 }
 
 export interface AppHandle {
@@ -87,14 +130,18 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   // Export: the catalog rows of the photos currently shown, as a .cex download.
   const exportBtn = el("button", { type: "button", class: "export",
     title: "Download the catalog entries for the photos shown (.cex)" }, "Export");
-  exportBtn.addEventListener("click", () => {
-    const blob = new Blob([photosToCex(visible)], { type: "text/plain;charset=utf-8" });
-    const a = el("a", { href: URL.createObjectURL(blob), download: exportFileName(opts.exportName ?? "") });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
-  });
+  exportBtn.addEventListener("click", () => download(photosToCex(visible), exportFileName(opts.exportName ?? "")));
+  // Export selections: the regions marked in the photo view this session, as CITE2 URNs.
+  const exportSelBtn = el("button", { type: "button", class: "export export-selections",
+    title: "Download the regions selected in the photo view (one CITE2 URN per line)" }, "Export selections");
+  const refreshSelBtn = () => {
+    const n = [...selections.values()].reduce((a, e) => a + e.rois.length, 0);
+    exportSelBtn.hidden = n === 0;
+    exportSelBtn.textContent = `Export selections (${n})`;
+  };
+  refreshSelBtn();
+  exportSelBtn.addEventListener("click", () => download(selectionsText([...selections.values()]),
+    exportFileName(opts.exportName ?? "").replace(/-selection\.cex$/, "-regions.txt")));
   // Captions under the grid tiles (off by default; kept in the hash as captions=1).
   let showCaptions = readHash(location.hash).captions === "1";
   const captionBox = el("input", { type: "checkbox" });
@@ -154,7 +201,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   }
   const header = el("header", { class: "bar" },
     el("h1", {}, "Image Viewer"), ...(opts.toolbar ?? []), seg, yearSel, placeSel, ...toggle,
-    el("label", { class: "toggle" }, captionBox, " Captions"), search, count, exportBtn, versionInfo());
+    el("label", { class: "toggle" }, captionBox, " Captions"), search, count, exportBtn, exportSelBtn, versionInfo());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);
@@ -170,13 +217,29 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   search.addEventListener("input", () => { query = search.value; render(); });
 
   // ---- Lightbox ----
-  const viewer = new ZoomViewer({ onSwipe: (dir) => show(current + dir) });
+  let roiLayer: RoiLayer | null = null;
+  const viewer = new ZoomViewer({
+    onSwipe: (dir) => { if (!roiLayer?.isSelecting) show(current + dir); },
+    onViewChange: () => roiLayer?.render(),
+    claimPointer: (e) => e.shiftKey, // Shift-drag draws a selection instead of panning
+  });
+  const selBox = el("section", { class: "selections" });
+  roiLayer = new RoiLayer(viewer, (rois) => {
+    const p = visible[current];
+    if (!p) return;
+    if (rois.length) selections.set(selectionKey(p), { photo: p, rois });
+    else selections.delete(selectionKey(p));
+    setRoiHash(rois);
+    renderSelections(p);
+    refreshSelBtn();
+  });
+  viewer.controls.append(roiLayer.toggle);
   const lbInfo = el("aside", { class: "info" });
   const prev = el("button", { class: "nav prev", "aria-label": "Previous" }, "‹");
   const next = el("button", { class: "nav next", "aria-label": "Next" }, "›");
   const close = el("button", { class: "close", "aria-label": "Close" }, "×");
   const lb = el("div", { class: "lightbox", hidden: "", role: "dialog", "aria-modal": "true" },
-    el("div", { class: "stage" }, viewer.el, prev, next, close, viewer.controls), lbInfo);
+    el("div", { class: "stage" }, viewer.el, roiLayer.el, prev, next, close, viewer.controls), lbInfo);
   document.body.append(lb);
   let current = -1;
   let fullToken = 0; // ignores full images that arrive after moving on
@@ -187,9 +250,60 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
    * moving to the previous/next photo replaces it.
    */
   function setPhotoHash(path: string | null, push: boolean) {
-    const url = withHash(location.hash, { photo: path }) || location.pathname + location.search;
+    const rois = path && roiLayer ? roiLayer.list : [];
+    const url = withHash(location.hash, { photo: path, roi: rois.length ? formatRois(rois) : null })
+      || location.pathname + location.search;
     if (push) history.pushState({ photoView: true }, "", url);
     else history.replaceState(history.state, "", url);
+  }
+
+  /** Keep the open photo's selections in the URL (roi=x,y,w,h;…) so a link shows them. */
+  function setRoiHash(rois: Roi[]) {
+    history.replaceState(history.state, "",
+      withHash(location.hash, { roi: rois.length ? formatRois(rois) : null }) || location.pathname + location.search);
+  }
+
+  /** The info panel's list of selections for the open photo. */
+  function renderSelections(p: Photo) {
+    const rois = roiLayer!.list, cur = roiLayer!.currentIndex;
+    const btn = (label: string, title: string, fn: () => void) => {
+      const b = el("button", { type: "button", class: "sel-btn", title }, label);
+      b.addEventListener("click", fn);
+      return b;
+    };
+    const copyBtn = (text: string, title: string) => {
+      const b = btn("Copy", title, () => copyText(text).then((ok) => { b.textContent = ok ? "Copied" : "Copy failed"; }));
+      return b;
+    };
+    /** "Copy all": every selection, one per line (URNs when the photo has a urn, else x,y,w,h). */
+    const copyAll = (lines: string[], what: string) => {
+      const b = btn("Copy all", `Copy every selection's ${what}, one per line`, () =>
+        copyText(lines.join("\n")).then((ok) => { b.textContent = ok ? `Copied ${lines.length}` : "Copy failed"; }));
+      b.classList.add("copy-all");
+      return b;
+    };
+    const items = rois.map((r, i) => {
+      const urn = p.urn ? roiUrn(p.urn, r) : "";
+      const li = el("li", { class: i === cur ? "current" : "" },
+        el("button", { type: "button", class: "sel-num", title: "Make this the current selection" }, String(i + 1)),
+        el("code", {}, formatRoi(r)), copyBtn(formatRoi(r), "Copy x,y,w,h"),
+        btn("×", "Remove this selection", () => roiLayer!.remove(i)),
+        ...(urn ? [el("code", { class: "sel-urn" }, urn), copyBtn(urn, "Copy CITE2 URN")] : []));
+      li.querySelector(".sel-num")!.addEventListener("click", () => roiLayer!.select(i));
+      return li;
+    });
+    const urns = p.urn ? rois.map((r) => roiUrn(p.urn, r)) : [];
+    selBox.replaceChildren(
+      el("h3", {}, `Selections (${rois.length})`),
+      ...(rois.length ? [el("ol", {}, ...items)] : [el("p", { class: "sel-hint" },
+        "Shift-drag on the photo, or press Select and drag, to mark a region.")]),
+      ...(rois.length && !p.urn ? [el("p", { class: "sel-hint" }, "Add a urn column to the catalog to get CITE2 URNs.")] : []),
+      ...(rois.length ? [el("div", { class: "sel-actions" },
+        ...(urns.length ? [btn("Download", "Save the URNs as a text file", () => download(urns.join("\n") + "\n",
+          `${(p.path.split("/").pop() ?? "photo").replace(/\.[^.]+$/, "")}-regions.txt`))] : []),
+        copyAll(urns.length ? urns : rois.map(formatRoi), urns.length ? "URN" : "x,y,w,h"),
+        btn("Clear all", "Remove every selection on this photo", () => roiLayer!.clear()))] : []),
+    );
   }
 
   /** Open the first photo in the current view with this path; false if there is none. */
@@ -227,7 +341,14 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       ...(p.cataloged || opts.markUncataloged === false ? [] : [el("p", { class: "badge" }, "Not in catalog")]),
       el("dl", {}, ...rows.filter(([, v]) => v).flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
       el("a", { href: opts.images?.originalUrl?.(p) ?? p.url, target: "_blank", rel: "noopener" }, "Open original ↗"),
+      selBox,
     );
+    // Selections: from a link (roi= in the URL) when opening from the URL, else this session's.
+    const fromUrl = how === "none" && readHash(location.hash).photo === p.path ? parseRois(readHash(location.hash).roi ?? "") : [];
+    if (fromUrl.length) selections.set(selectionKey(p), { photo: p, rois: fromUrl });
+    roiLayer!.set(selections.get(selectionKey(p))?.rois ?? []);
+    renderSelections(p);
+    refreshSelBtn();
     prev.disabled = i === 0;
     next.disabled = i === visible.length - 1;
     lb.hidden = false;
@@ -235,7 +356,10 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     close.focus();
     if (how !== "none") setPhotoHash(p.path, how === "push");
   }
-  const closeLightbox = () => { lb.hidden = true; viewer.clear(); current = -1; fullToken++; };
+  const closeLightbox = () => {
+    lb.hidden = true; viewer.clear(); current = -1; fullToken++;
+    roiLayer!.setSelecting(false); roiLayer!.set([]);
+  };
   function hide() {
     if (lb.hidden) return;
     closeLightbox();
@@ -256,6 +380,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   close.addEventListener("click", hide);
   const onKey = (e: KeyboardEvent) => {
     if (lb.hidden) return;
+    if (roiLayer!.handleKey(e)) { e.preventDefault(); return; }
     if (e.key === "Escape") hide();
     else if (e.key === "ArrowLeft") show(current - 1);
     else if (e.key === "ArrowRight") show(current + 1);
@@ -285,7 +410,12 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     if (opts.images) {
       const imgs = opts.images;
       const fill = () => imgs.tile(p).then((u) => { img.src = u; }, () => b.classList.add("broken"));
-      img.addEventListener("error", () => b.classList.add("broken"));
+      let triedFallback = !imgs.tileFallback;
+      img.addEventListener("error", () => {
+        if (triedFallback) { b.classList.add("broken"); return; }
+        triedFallback = true;
+        imgs.tileFallback!(p).then((u) => { img.src = u; }, () => b.classList.add("broken"));
+      });
       if (tileObserver) { pendingTiles.set(b, fill); tileObserver.observe(b); } else fill();
     } else {
       // Thumbnail first; if there isn't one yet, fall back to the full-size original.

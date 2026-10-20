@@ -37,6 +37,7 @@ export function parseCatalog(text: string): { entries: CatalogEntry[]; errors: s
       // Optional columns.
       year: r.year ?? "",
       placeName: r.place ?? "",
+      urn: (r.urn ?? "").trim(),
     });
   }
   return { entries, errors };

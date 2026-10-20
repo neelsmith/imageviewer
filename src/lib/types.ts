@@ -8,6 +8,8 @@ export interface CatalogEntry {
   year: string;
   /** Optional `place` column (e.g. "Priene"); "" if absent. Not the EXIF-derived Photo.place. */
   placeName: string;
+  /** Optional `urn` column: the image's CITE2 URN (selections append @x,y,w,h); "" if absent. */
+  urn: string;
 }
 
 export interface Place {
@@ -41,6 +43,8 @@ export interface Photo {
   year: string;
   /** Catalog `place` column; "" if none. */
   placeName: string;
+  /** Catalog `urn` column (CITE2 image URN); "" if none. */
+  urn: string;
   date: string;
   lat: number | null;
   lon: number | null;

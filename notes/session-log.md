@@ -332,3 +332,47 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - Tests: 108 Vitest (export round-trip, UI download honouring filter/order, captions toggle).
   Browser check: download z-selection.cex content correct; caption layout OK.
 - App change → version bump before release.
+
+## 2026-10-20 — session 25: browse.html (web server folder browser)
+
+- Neel: nginx server, rerunning the index is fine, mostly JPEG/PNG + some HEIC; chose option A
+  (index file; no server folder listings).
+- Refactor: folder navigation moved from local-app.ts into ui/folder-browser.ts
+  (browseFolder + PhotoSource); local.html behaviour unchanged (its tests pass).
+  lib/local/tree.ts: dirFromPaths (dirFromFileList now uses it). ImageProvider gained
+  tileFallback/originalUrl/dispose; app.ts tiles try tileFallback once on error.
+- New: ui/browse-app.ts, ui/web/images.ts (WebImages), lib/web/paths.ts (safeRelPath,
+  folderNameFromUrl), main-browse.ts, browse.html, build mode `browse` (5 pages now).
+- utils: images-index `--catalogs` writes catalogs.cex (listCatalogs/catalogsText in index-lib).
+- Tests: 116 Vitest (web-paths, web-images, browse-app UI flow incl. no-cache catalog refetch,
+  unsafe paths ignored, thumb→original fallback; build test 5 pages); 36 utils tests.
+  Headless Chromium against python http.server: thumbnails + fallback, HEIC tiles decoded,
+  HEIC photo view (~1 s), catalog order, place groups from images.cex, deep link reopens photo.
+- Not tested on nginx itself. App change → version bump.
+
+## 2026-10-20 — session 26: region selections + CITE2 URNs
+
+- Neel: plain x,y,w,h and CITE2 `urn@x,y,w,h`; optional `urn` catalog column; multiple boxes per
+  photo; export a list of URNs; keep while the page is open + shareable link; rotation is the
+  collection manager's concern.
+- Built as in notes/development.md "Region selections". New: lib/roi.ts, ui/roi-layer.ts;
+  urn in CatalogEntry/Photo/parseCatalog/merge/export; app.ts panel, hash roi=, session store,
+  Export selections button, copyText helper.
+- Tests: 127 Vitest (roi math round-trip at any zoom/pan, parse/format, URN; app flows: roi= link,
+  remove updates URL, per-photo memory across next/prev, Export selections file, no-urn hint).
+  Headless Chromium: Shift-drag top-left quarter → box stays on the same image region after zoom
+  67% + pan; select-mode draw, move, resize to corner (0.5,0.5,0.5,0.5), Copy all URNs to
+  clipboard, Delete, Esc, grid Export selections (1).
+- App change → version bump.
+- 'Copy all' button now sits next to 'Clear all' and works for every photo (URNs if it has a urn, else x,y,w,h), replacing 'Copy all URNs'. Shows 'Copied n'. 128 Vitest pass.
+
+## 2026-10-21 — session 27: renames for 2.0.0
+
+- Outputs renamed: index.html → catalogs.html (default build, empties dist/), family.html →
+  private.html (mode `private`, main-private.ts), browse.html → www-browse.html (mode
+  `www-browse`, main-www-browse.ts). Sources renamed to match; comments, tests, notes updated.
+- check-release now checks docs/catalogs.html (docs/index.html is the Quarto site now).
+- 128 Vitest + 36 utils tests pass; 5 pages built. Stale src/dist/index.html, family.html,
+  browse.html can't be deleted from here (no permission) — Neel to delete.
+- Dev server: no page at "/" any more; use /catalogs.html.
+- src/local.html had been deleted (git showed ' D'); restored from HEAD with git show (no git index changes). Build passes again.

@@ -5,7 +5,7 @@
 //   npm run check-release -- v1.0.0  # or an explicit tag
 //
 // Verifies that the tag matches src/package.json's version, isn't already used,
-// and that docs/index.html was built from that version. family.html is not checked:
+// and that docs/catalogs.html was built from that version. The other pages aren't checked:
 // Neel places it wherever he likes under docs/.
 // Prints the git commands to run if everything is in order.
 import { readFile } from "node:fs/promises";
@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-export const PAGES = ["docs/index.html"];
+export const PAGES = ["docs/catalogs.html"];
 
 /** True if the built page embeds exactly this version as a string literal ("…", '…' or `…`). */
 export function hasVersion(html, version) {
@@ -32,7 +32,7 @@ export function checkRelease({ tag, pkgVersion, existingTags, pages }) {
   for (const [path, html] of Object.entries(pages)) {
     if (html === null) problems.push(`${path} is missing.`);
     else if (!hasVersion(html, pkgVersion))
-      problems.push(`${path} wasn't built from version ${pkgVersion} — run npm run build in src/ and copy dist/index.html to docs/.`);
+      problems.push(`${path} wasn't built from version ${pkgVersion} — run npm run build in src/ and copy dist/catalogs.html to docs/.`);
   }
   return problems;
 }

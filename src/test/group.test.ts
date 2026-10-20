@@ -3,7 +3,7 @@ import { groupPhotos, filterPhotos, selectPhotos, facetValues } from "../lib/gro
 import type { Photo } from "../lib/types";
 
 const photo = (path: string, extra: Partial<Photo> = {}): Photo => ({
-  path, url: path, thumb: path, caption: "", credits: "", license: "", tags: [], year: "", placeName: "", date: "",
+  path, url: path, thumb: path, caption: "", credits: "", license: "", tags: [], year: "", placeName: "", urn: "", date: "",
   lat: null, lon: null, place: null, width: null, height: null,
   cataloged: false, catalogOrder: null, indexed: true, ...extra,
 });
