@@ -15,8 +15,8 @@ Apps for light-table and zoomable/pannable display of individual images, impleme
 
 In the `src` directory, `npm run build` builds the following apps:
 
-- `local.html`: browse and catalog images in your local file system
+- `local.html`: browse and catalog images in your local file system. (Current version always in the github repository as `local-image-viewer.html`.)
 - `private.html`: password-protected image browser
-- `catalogs.html`: browse images from catalogs
+- `catalogs.html`: browse images from catalogs. (Current version with example data hosted at [https://neelsmith.github.io/imageviewer/catalogs.html](https://neelsmith.github.io/imageviewer/catalogs.html).)
 - `private-catalogs.html`: browse images from catalogs, optionally password-protected by catalog
 - `www.browse.html`: browse images on a web server
