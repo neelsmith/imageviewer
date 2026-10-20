@@ -1,6 +1,6 @@
 # Routine maintenance
 
-None of these tasks needs a rebuild or a release, except changing the `family.html` password. The apps read `data/` from GitHub's `main` branch
+None of these tasks needs a rebuild or a release, except changing the `private.html` password. The apps read `data/` from GitHub's `main` branch
 (or `?branch=…`); changes appear within ~5 minutes of pushing. Preview locally with
 `cd src && npm run dev`.
 
@@ -51,9 +51,21 @@ are ignored) and commit it with the data. All three apps show it next to the app
 4. A "keep out" sign only: the catalog files and images are public (anyone can read them on
    GitHub), so don't put anything here that must stay secret.
 
-## Changing the family.html password
+## Changing the private.html password
 
 `cd utils && npm run set-password` (prompts twice; `-- --off` removes the password screen), then
-rebuild (`cd ../src && npm run build`) and replace your copy of `family.html` under `docs/`
-with `dist/family.html`. The hash is baked into the page, so commit `src/auth.json` and the new page,
+rebuild (`cd ../src && npm run build`) and replace your copy of `private.html` under `docs/`
+with `dist/private.html`. The hash is baked into the page, so commit `src/auth.json` and the new page,
 and push. Devices that remembered the old password are logged out.
+
+## www-browse.html on the web server
+
+Adding photos (or new .cex catalog files) under the browse folder:
+
+```sh
+cd utils
+npm run images-index -- --root <folder> --out <folder>/images.cex --catalogs
+npm run thumbnails   -- --root <folder>
+```
+
+Editing an existing catalog: nothing to do — it's read fresh when the page loads.

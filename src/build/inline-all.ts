@@ -7,7 +7,7 @@ const safeStyle = (css: string) => css.replace(/<\/(style)/gi, "<\\/$1");
 
 /**
  * Inline every JS chunk and CSS asset into the HTML so the build is a single,
- * self-contained index.html that works from file:// or any static server.
+ * self-contained HTML page that works from file:// or any static server.
  * (Replaces vite-plugin-singlefile, whose dependency chain carries an unpatched
  * advisory in `braces`.)
  */

@@ -19,6 +19,7 @@ export function photosToCex(photos: Photo[]): string {
   ];
   if (rows.some((p) => p.year)) cols.push(["year", (p) => p.year]);
   if (rows.some((p) => p.placeName)) cols.push(["place", (p) => p.placeName]);
+  if (rows.some((p) => p.urn)) cols.push(["urn", (p) => p.urn]);
   const clean = (v: string) => v.replace(/\s*[|\r\n]+\s*/g, " ").trim();
   return [cols.map(([h]) => h), ...rows.map((p) => cols.map(([, f]) => clean(f(p))))]
     .map((r) => r.join("|")).join("\n") + "\n";

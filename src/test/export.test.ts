@@ -4,7 +4,7 @@ import { parseCatalog } from "../lib/catalog";
 import type { Photo } from "../lib/types";
 
 const photo = (path: string, extra: Partial<Photo> = {}): Photo => ({
-  path, url: path, thumb: path, caption: "", credits: "", license: "", tags: [], year: "", placeName: "", date: "",
+  path, url: path, thumb: path, caption: "", credits: "", license: "", tags: [], year: "", placeName: "", urn: "", date: "",
   lat: null, lon: null, place: null, width: null, height: null,
   cataloged: false, catalogOrder: null, indexed: true, ...extra,
 });
@@ -30,5 +30,12 @@ describe("export", () => {
     expect(exportFileName("data/catalogs/mss.cex")).toBe("mss-selection.cex");
     expect(exportFileName("Family photos")).toBe("Family-photos-selection.cex");
     expect(exportFileName("")).toBe("selection.cex");
+  });
+});
+
+describe("export with urn and selections text", () => {
+  it("adds a urn column when used", () => {
+    const text = photosToCex([photo("a.jpg", { urn: "urn:cite2:x:y.v1:a" }), photo("b.jpg")]);
+    expect(text.split("\n")[0]).toBe("path|caption|credits|license|tags|urn");
   });
 });

@@ -32,6 +32,6 @@
     "href": "index.html#using-the-image-viewer-app-for-local-files",
     "title": "Image viewers",
     "section": "Using the image viewer app for local files",
-    "text": "Using the image viewer app for local files\nimage-viewer.html is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.\nSee this page for information about how to add cataloging information for your local images."
+    "text": "Using the image viewer app for local files\nlocal-image-viewer.html is an app for browsing and viewing images in your local file system. Open it in your favorite web browser, and choose a folder in your local file system. The app will find and images in the folder you are viewing, and allow you to display and filter them just like the web installations.\nSee this page for information about how to add cataloging information for your local images."
   }
 ]

@@ -2,17 +2,20 @@
 // Build data/images.cex from the pCloud Public Folder: one row per image with
 // date taken, GPS position, place names and display size.
 //
-//   npm run images-index -- [--root DIR] [--out FILE] [--refresh] [--no-geocode] [--dry-run]
+//   npm run images-index -- [--root DIR] [--out FILE] [--refresh] [--no-geocode] [--dry-run] [--catalogs]
+//
+// --catalogs (for www-browse.html): also write catalogs.cex next to --out, listing every .cex
+// file under --root.
 //
 // Files already in images.cex are not re-read unless --refresh is given, so
 // reruns only touch new photos (each read downloads part of the file from pCloud).
 import { open, readFile, writeFile } from "node:fs/promises";
-import { join, dirname } from "node:path";
+import { join, dirname, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import exifr from "exifr";
 import { imageSize } from "image-size";
-import { listImages, exifDateToIso, displaySize, serialize, parseExisting } from "./lib/index-lib.mjs";
+import { listImages, listCatalogs, catalogsText, exifDateToIso, displaySize, serialize, parseExisting } from "./lib/index-lib.mjs";
 import { defaultImageRoot } from "./lib/site-config.mjs";
 import { Geocoder } from "./lib/geocode.mjs";
 
@@ -118,6 +121,8 @@ async function main() {
     refresh: { type: "boolean", default: false },
     "no-geocode": { type: "boolean", default: false },
     "dry-run": { type: "boolean", default: false },
+    // www-browse.html: also list every .cex catalog under --root in catalogs.cex next to --out.
+    catalogs: { type: "boolean", default: false },
   } });
 
   let existingText = "";
@@ -135,6 +140,14 @@ async function main() {
       (r.failed.length ? `, ${r.failed.length} unreadable (listed without metadata; retried next run)` : ""));
     if (values["dry-run"]) process.stdout.write(r.text);
     else { await writeFile(values.out, r.text); console.log(`Wrote ${values.out}`); }
+    if (values.catalogs) {
+      const listOut = join(dirname(values.out), "catalogs.cex");
+      const relToRoot = (f) => relative(values.root, f).split(sep).join("/");
+      const cats = await listCatalogs(values.root, [relToRoot(values.out), relToRoot(listOut)]);
+      const text = catalogsText(cats);
+      if (values["dry-run"]) process.stdout.write(text);
+      else { await writeFile(listOut, text); console.log(`Wrote ${listOut} (${cats.length} catalogs)`); }
+    }
   } finally {
     if (geocoder && !values["dry-run"]) await geocoder.save();
   }

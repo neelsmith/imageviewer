@@ -48,7 +48,7 @@ describe("per-catalog passwords", () => {
       { algorithm: "PBKDF2-SHA256", iterations: 1000, salt: "c2FsdA==", hash: "aGFzaA==" });
     expect(() => parseAuthSpec("secret")).toThrow(/catalog-password/);
   });
-  it("remembers each catalog separately from family.html and from each other", () => {
+  it("remembers each catalog separately from private.html and from each other", () => {
     const m = new Map<string, string>();
     const st = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v),
       removeItem: (k: string) => void m.delete(k) };

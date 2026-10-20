@@ -17,6 +17,7 @@ describe("catalog", () => {
       tags: ["Pliny", "Leiden"],
       year: "",
       placeName: "",
+      urn: "",
     }]);
   });
 
@@ -44,5 +45,12 @@ describe("catalog", () => {
   it("skips rows without a path and rejects a file with no path column", () => {
     expect(parseCatalog("path|caption\n|orphan\n").entries).toEqual([]);
     expect(parseCatalog("file|caption\na|b\n").errors).toContain('catalog has no "path" column');
+  });
+});
+
+describe("catalog urn column", () => {
+  it("reads an optional urn", () => {
+    const { entries } = parseCatalog("path|caption|credits|license|tags|urn\na.jpg|A|||x| urn:cite2:hmt:vaimg.2017a:VA012RN_0013 \nb.jpg|B|||x|\n");
+    expect(entries.map((e) => e.urn)).toEqual(["urn:cite2:hmt:vaimg.2017a:VA012RN_0013", ""]);
   });
 });

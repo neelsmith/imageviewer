@@ -85,3 +85,31 @@ export function parseExisting(text) {
   }
   return rows;
 }
+
+/**
+ * Every .cex catalog under root (forward-slash paths, sorted), for browse.html. Skips
+ * dotfiles, _thumbs/, and the given root-relative paths (the index files themselves).
+ */
+export async function listCatalogs(root, exclude = []) {
+  const skip = new Set(exclude);
+  const out = [];
+  async function walk(dir) {
+    for (const ent of await readdir(dir, { withFileTypes: true })) {
+      if (ent.name.startsWith(".")) continue;
+      if (dir === root && ent.name === THUMBS_DIR) continue;
+      const full = join(dir, ent.name);
+      if (ent.isDirectory()) await walk(full);
+      else if (ent.isFile() && extname(ent.name).toLowerCase() === ".cex") {
+        const rel = relative(root, full).split(sep).join("/");
+        if (!skip.has(rel)) out.push(rel);
+      }
+    }
+  }
+  await walk(root);
+  return out.sort();
+}
+
+/** catalogs.cex text: a "path" header and one catalog path per line. */
+export function catalogsText(paths) {
+  return ["path", ...paths].join("\n") + "\n";
+}

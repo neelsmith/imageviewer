@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { startApp } from "../ui/app";
 import { buildPhotos } from "../ui/load";
 
-// UI flow test for the "Cataloged images only" toggle (family.html).
+// UI flow test for the "Cataloged images only" toggle (private.html).
 const CAT = "path|caption|credits|license|tags\na.jpg|A|||x\n";
 const IDX = "path|date|lat|lon|city|region|country|width|height\na.jpg|||||||1|1\nb.jpg|||||||1|1\nc.jpg|||||||1|1\n";
 const cfg = { imageBase: "https://h/", dataBase: "https://d/" };
@@ -13,7 +13,7 @@ describe("Cataloged images only toggle", () => {
   let root: HTMLElement;
   beforeEach(() => {
     document.body.innerHTML = "";
-    history.replaceState(null, "", "/family.html");
+    history.replaceState(null, "", "/private.html");
     root = document.createElement("div");
     document.body.append(root);
   });
@@ -37,14 +37,14 @@ describe("Cataloged images only toggle", () => {
   });
 
   it("restores the unticked state from the URL", async () => {
-    history.replaceState(null, "", "/family.html#all=1");
+    history.replaceState(null, "", "/private.html#all=1");
     startApp(root, cfg, { catalogToggle: true, load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
     await flush();
     expect(root.querySelector<HTMLInputElement>(".toggle input")!.checked).toBe(false);
     expect(tiles(root)).toBe(3);
   });
 
-  it("is absent unless requested (index.html)", async () => {
+  it("is absent unless requested (catalogs.html)", async () => {
     startApp(root, cfg, { load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
     await flush();
     expect([...root.querySelectorAll(".toggle")].some((l) => l.textContent?.includes("Cataloged images only"))).toBe(false);
@@ -129,7 +129,7 @@ describe("photo links (#photo=<path>)", () => {
   });
 
   it("explains a link to a photo that is hidden or missing", async () => {
-    history.replaceState(null, "", "/family.html#photo=b.jpg");
+    history.replaceState(null, "", "/private.html#photo=b.jpg");
     start({ catalogToggle: true });
     await flush();
     expect(lightbox().hidden).toBe(true);
@@ -278,5 +278,91 @@ describe("Export and Captions (grid)", () => {
     expect(location.hash).toContain("captions=1");
     const again = await open("/#captions=1");
     expect(again.querySelector("main")!.classList.contains("with-captions")).toBe(true);
+  });
+});
+
+describe("region selections in the photo view", () => {
+  const CATU = "path|caption|credits|license|tags|urn\na.jpg|A|||t|urn:cite2:test:img.v1:a\nb.jpg|B|||t|\n";
+  const IDXU = "path|date|lat|lon|city|region|country|width|height\na.jpg|||||||400|300\nb.jpg|||||||400|300\n";
+  async function open(url: string) {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", url);
+    const root = document.createElement("div");
+    document.body.append(root);
+    startApp(root, cfg, { exportName: "data/catalogs/mss.cex", load: async () => buildPhotos(CATU, IDXU, cfg.imageBase) });
+    await flush(); await flush();
+    return root;
+  }
+  const rows = () => [...document.querySelectorAll(".selections li")].map((li) =>
+    [...li.querySelectorAll("code")].map((c) => c.textContent));
+
+  it("a link with roi= reopens the photo with its selections and CITE2 URNs", async () => {
+    await open("/#photo=a.jpg&roi=0,0,0.5,0.5;0.25,0.125,0.5,0.25");
+    expect(rows()).toEqual([
+      ["0.0000,0.0000,0.5000,0.5000", "urn:cite2:test:img.v1:a@0.0000,0.0000,0.5000,0.5000"],
+      ["0.2500,0.1250,0.5000,0.2500", "urn:cite2:test:img.v1:a@0.2500,0.1250,0.5000,0.2500"],
+    ]);
+    expect(document.querySelectorAll(".roi-layer .roi").length).toBe(2);
+    expect(document.querySelector(".selections h3")!.textContent).toBe("Selections (2)");
+
+    // Removing one updates the URL.
+    (document.querySelectorAll<HTMLButtonElement>('.selections li button[title="Remove this selection"]')[0]).click();
+    expect(rows().length).toBe(1);
+    expect(decodeURIComponent(location.hash)).toContain("roi=0.2500,0.1250,0.5000,0.2500");
+  });
+
+  it("selections are kept per photo while the page is open, and Export selections lists the URNs", async () => {
+    const root = await open("/#photo=a.jpg&roi=0.1,0.1,0.2,0.2");
+    // Move to b.jpg (no selections, no urn) and back.
+    (document.querySelector<HTMLButtonElement>(".nav.next")!).click();
+    expect(rows()).toEqual([]);
+    expect(location.hash).not.toContain("roi=");
+    (document.querySelector<HTMLButtonElement>(".nav.prev")!).click();
+    expect(rows()[0][0]).toBe("0.1000,0.1000,0.2000,0.2000");
+    expect(location.hash).toContain("roi=");
+
+    const btn = root.querySelector<HTMLButtonElement>(".export-selections")!;
+    expect(btn.hidden).toBe(false);
+    let blob: Blob | null = null; let name = "";
+    URL.createObjectURL = vi.fn((b: Blob) => { blob = b; return "blob:x"; });
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) { name = this.download; });
+    btn.click();
+    expect(name).toBe("mss-regions.txt");
+    expect(await blob!.text()).toContain("urn:cite2:test:img.v1:a@0.1000,0.1000,0.2000,0.2000\n");
+    click.mockRestore();
+  });
+
+  it("photos without a urn still list x,y,w,h, with a hint", async () => {
+    await open("/#photo=b.jpg&roi=0,0,1,1");
+    expect(rows()).toEqual([["0.0000,0.0000,1.0000,1.0000"]]);
+    expect(document.querySelector(".selections")!.textContent).toContain("Add a urn column");
+  });
+});
+
+describe("Copy all selections", () => {
+  it("copies every selection, one per line: URNs if the photo has a urn, else x,y,w,h", async () => {
+    let copied = "";
+    Object.defineProperty(navigator, "clipboard", { configurable: true,
+      value: { writeText: async (t: string) => { copied = t; } } });
+    const CATU = "path|caption|credits|license|tags|urn\na.jpg|A|||t|urn:cite2:test:img.v1:a\nb.jpg|B|||t|\n";
+    const IDXU = "path|date|lat|lon|city|region|country|width|height\na.jpg|||||||4|3\nb.jpg|||||||4|3\n";
+    for (const [photo, expected] of [
+      ["a.jpg", "urn:cite2:test:img.v1:a@0.0000,0.0000,0.5000,0.5000\nurn:cite2:test:img.v1:a@0.5000,0.5000,0.5000,0.5000"],
+      ["b.jpg", "0.0000,0.0000,0.5000,0.5000\n0.5000,0.5000,0.5000,0.5000"],
+    ]) {
+      document.body.innerHTML = "";
+      history.replaceState(null, "", `/#photo=${photo}&roi=0,0,0.5,0.5;0.5,0.5,0.5,0.5`);
+      const root = document.createElement("div");
+      document.body.append(root);
+      startApp(root, cfg, { load: async () => buildPhotos(CATU, IDXU, cfg.imageBase) });
+      await flush(); await flush();
+      const actions = [...document.querySelectorAll(".sel-actions button")].map((b) => b.textContent);
+      expect(actions.slice(-2)).toEqual(["Copy all", "Clear all"]); // side by side
+      document.querySelector<HTMLButtonElement>(".copy-all")!.click();
+      await flush();
+      expect(copied).toBe(expected);
+      expect(document.querySelector(".copy-all")!.textContent).toBe("Copied 2");
+    }
   });
 });

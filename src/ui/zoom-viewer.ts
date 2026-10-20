@@ -6,6 +6,10 @@ import {
 export interface ZoomViewerOptions {
   /** Horizontal touch swipe while not zoomed: -1 = previous, 1 = next. */
   onSwipe?: (dir: -1 | 1) => void;
+  /** Called after every zoom/pan/size change (e.g. to redraw selections). */
+  onViewChange?: () => void;
+  /** Return true to leave this pointerdown to someone else (no panning), e.g. Shift-drag to select. */
+  claimPointer?: (e: PointerEvent) => boolean;
 }
 
 const STEP = 1.5; // zoom factor for buttons and +/- keys
@@ -129,6 +133,7 @@ export class ZoomViewer {
     this.showingPlaceholder = false;
     this.img.removeAttribute("src");
     this.setNatural(null);
+    this.opts.onViewChange?.();
   }
 
   /** Record the image's full size and size the <img> to it (so a thumbnail fills the same box). */
@@ -165,6 +170,16 @@ export class ZoomViewer {
     return true;
   }
 
+  /** Current zoom/pan (stage pixels) and the image's full size, or null before it's known. */
+  get state(): { view: { scale: number; x: number; y: number }; image: Size } | null {
+    return this.natural ? { view: { ...this.view }, image: { ...this.natural } } : null;
+  }
+
+  /** A pointer/mouse position relative to the viewer. */
+  localPoint(e: { clientX: number; clientY: number }): [number, number] {
+    return this.point(e);
+  }
+
   private stage(): Size {
     return { w: this.el.clientWidth, h: this.el.clientHeight };
   }
@@ -177,6 +192,7 @@ export class ZoomViewer {
   private apply(): void {
     const { scale, x, y } = this.view;
     this.img.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    queueMicrotask(() => this.opts.onViewChange?.());
     this.label.textContent = `${Math.round(scale * 100)}%`;
     const zoomed = this.zoomed;
     this.el.classList.toggle("zoomed", zoomed);
@@ -222,6 +238,7 @@ export class ZoomViewer {
 
     el.addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (this.opts.claimPointer?.(e)) return;
       el.setPointerCapture?.(e.pointerId);
       this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (this.pointers.size === 1)
