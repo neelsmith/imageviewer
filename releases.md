@@ -4,7 +4,7 @@
 Current version: **1.9.0**
 
 
-**2.0.0**, *?*:
+**2.0.0**, *Oct. 20, 2026*:
 
 - adds `browse.html`, an app for browsing images from an app's directory on a web server
 - adds citable, scale-independent RoIs to all apps
