@@ -22,15 +22,15 @@ in the published HTML.
 ```sh
 cd src
 npm install
-npm run dev          # http://localhost:5173 (+ /private.html, /private-catalogs.html, /local.html) — reads ../data/ from the local repo
+npm run dev          # http://localhost:5173 (+ /family.html, /private-catalogs.html, /local.html) — reads ../data/ from the local repo
 npm test             # Vitest unit tests (lib/)
 npm run typecheck
-npm run build        # → src/dist/index.html, private.html, private-catalogs.html, local.html, each self-contained
+npm run build        # → src/dist/index.html, family.html, private-catalogs.html, local.html, each self-contained
 ```
 
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
 `?data=<dir URL>`, `?images=<base URL>`, `#group=date|location|tag`.
-Hash keys (combine with `&`): `catalog=<cex_file>` (index.html), `all=1` (private.html),
+Hash keys (combine with `&`): `catalog=<cex_file>` (index.html), `all=1` (family.html),
 `photo=<path>` — opens that photo, e.g. `index.html#catalog=data%2Fcatalogs%2Fmss.cex&photo=leiden-pliny%2FIMG_1203.jpeg`.
 
 Single-photo view zoom: `lib/zoom.ts` (pure math, tested) + `ui/zoom-viewer.ts` (wheel/trackpad
@@ -45,11 +45,11 @@ grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + light
 | Page | Data | Password |
 |---|---|---|
 | `index.html` (source `src/index.html`, `main-catalogs.ts`) | menu from `data/catalog_of_catalogs.cex` → chosen catalog, cataloged images only | no |
-| `private.html` (source `src/private.html`, `main-private.ts`) | `data/catalog.cex` + every image in `data/images.cex`; "Cataloged images only" toggle (default on; off = `#all=1`) | yes (if set) |
+| `family.html` (source `src/family.html`, `main-family.ts`) | `data/catalog.cex` + every image in `data/images.cex`; "Cataloged images only" toggle (default on; off = `#all=1`) | yes (if set) |
 | `private-catalogs.html` (source `src/private-catalogs.html`, `main-private-catalogs.ts`) | menu from `data/catalog_of_private_catalogs.cex`; the chosen catalog's images (same view as index.html) | per catalog, from the list's optional `password` column |
 | `local.html` (source `src/local.html`, `main-local.ts`; build mode `local-folders`) | a folder on this computer, opened from disk — see below | no |
 
-Dev URLs: http://localhost:5173/, /private.html, /private-catalogs.html and /local.html
+Dev URLs: http://localhost:5173/, /family.html, /private-catalogs.html and /local.html
 (`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
 root, e.g. `data/catalogs/mss.cex`.
 
@@ -98,10 +98,10 @@ bakes it into both pages, shown as a small "vX.Y.Z" link to the GitHub release; 
 shows "vX.Y.Z-dev". Data updates (catalogs, images.cex) are not releases.
 
 1. Bump `"version"` in `src/package.json`; add notes to `releases.md` (Neel's file).
-2. `cd src && npm run build`, copy `dist/index.html`, `dist/private.html` and `dist/private-catalogs.html` to `docs/`.
+2. `cd src && npm run build`, copy `dist/index.html`, `dist/family.html` and `dist/private-catalogs.html` to `docs/`.
 3. `cd ../utils && npm run check-release` (tag defaults to v + package.json version) — checks tag format, match with
    package.json, tag not already used, and that docs/index.html embeds this version
-   (private.html and private-catalogs.html aren't checked — they may live anywhere under docs/).
+   (family.html and private-catalogs.html aren't checked — they may live anywhere under docs/).
 4. Commit, then `git tag -a vX.Y.Z -m "Release vX.Y.Z"` and `git push --follow-tags`.
 5. Optional: GitHub → Releases → draft from the tag, attach the two HTML files.
 

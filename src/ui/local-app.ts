@@ -183,6 +183,7 @@ export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { ope
       load, images, localFallback: false, catalogToggle: !!cat, markUncataloged: !!cat,
       toolbar: toolbar(here, catalogs, cat, includeSub),
       banner: subfolders(listing.dirs, rel),
+      exportName: cat || (here.path ? here.name : top.name),
     });
   }
 

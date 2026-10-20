@@ -1,4 +1,4 @@
-// Password-protected app (private.html): all images, with a "Cataloged images only" toggle.
+// Password-protected app (family.html): all images, with a "Cataloged images only" toggle.
 import "./ui/styles.css";
 import authConfig from "./auth.json";
 import { configFromSearch, DEFAULTS } from "./lib/config";
@@ -18,5 +18,6 @@ passwordGate(root, authConfig).then(() =>
   startApp(root, cfg, {
     onLock: isAuthEnabled(authConfig) ? () => { forget(); location.reload(); } : undefined,
     catalogToggle: true,
+    exportName: "catalog.cex",
   }),
 );

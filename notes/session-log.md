@@ -303,3 +303,32 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
 - Neel: local.html works well in Safari (his first real-browser test).
 - Neel: local.html also excellent in Chrome (folder picker + software HEIC decode confirmed on his Mac).
 - Fix: src/package-lock.json had never picked up exifr + libheif-js (my scratch copy was overwritten on each sync); regenerated and copied. Neel's build failed until 'npm install' in src/.
+
+## 2026-10-19 — session 22: Location is the default grouping
+
+- app.ts: DEFAULT_MODE = "location" (all four apps); #group= still overrides, unknown values
+  fall back to Location. Button order unchanged (Date, Location, Tag).
+- Tests: new 'default grouping' cases in app.test.ts; local-app test expectations updated
+  for location-first order. 103 Vitest pass; all four pages rebuilt into src/dist/.
+  App change → version bump before release.
+
+## 2026-10-19 — session 23: private.html → family.html
+
+- Output renamed: src/private.html → src/family.html, main-private.ts → main-family.ts, build
+  mode private → family. Comments, tests (build, app, auth, check-release) and notes updated.
+  Password memory unaffected (localStorage key doesn't depend on the file name).
+- 103 Vitest + 35 utils tests pass; rebuilt src/dist/. Stale src/dist/private.html left (no delete permission) — Neel can delete it.
+- Neel: replace docs/…/private.html with family.html; old links/bookmarks will break.
+- Vite 'configLoader: native' warnings fixed: vite.config.ts imports ./build/*.ts with extensions; tsconfig allowImportingTsExtensions. Build and tests now warning-free (103 pass).
+
+## 2026-10-20 — session 24: Export + Captions (grid, all four apps)
+
+- Neel's terms: "light table"/"lightbox" = the thumbnail grid.
+- Export button (bar): downloads a .cex of the photos currently shown (filters, toggle,
+  year/place, group order; one row per path; uncataloged photos as path-only rows; year/place
+  columns only if used; "|"/newlines → spaces). lib/export.ts photosToCex + exportFileName;
+  name "<catalog or folder>-selection.cex" via startApp option `exportName`.
+- Captions checkbox (bar), default off, hash `captions=1`: caption under each tile, max 3 lines.
+- Tests: 108 Vitest (export round-trip, UI download honouring filter/order, captions toggle).
+  Browser check: download z-selection.cex content correct; caption layout OK.
+- App change → version bump before release.

@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { startApp } from "../ui/app";
 import { buildPhotos } from "../ui/load";
 
-// UI flow test for the "Cataloged images only" toggle (private.html).
+// UI flow test for the "Cataloged images only" toggle (family.html).
 const CAT = "path|caption|credits|license|tags\na.jpg|A|||x\n";
 const IDX = "path|date|lat|lon|city|region|country|width|height\na.jpg|||||||1|1\nb.jpg|||||||1|1\nc.jpg|||||||1|1\n";
 const cfg = { imageBase: "https://h/", dataBase: "https://d/" };
@@ -13,7 +13,7 @@ describe("Cataloged images only toggle", () => {
   let root: HTMLElement;
   beforeEach(() => {
     document.body.innerHTML = "";
-    history.replaceState(null, "", "/private.html");
+    history.replaceState(null, "", "/family.html");
     root = document.createElement("div");
     document.body.append(root);
   });
@@ -37,7 +37,7 @@ describe("Cataloged images only toggle", () => {
   });
 
   it("restores the unticked state from the URL", async () => {
-    history.replaceState(null, "", "/private.html#all=1");
+    history.replaceState(null, "", "/family.html#all=1");
     startApp(root, cfg, { catalogToggle: true, load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
     await flush();
     expect(root.querySelector<HTMLInputElement>(".toggle input")!.checked).toBe(false);
@@ -47,7 +47,7 @@ describe("Cataloged images only toggle", () => {
   it("is absent unless requested (index.html)", async () => {
     startApp(root, cfg, { load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
     await flush();
-    expect(root.querySelector(".toggle")).toBeNull();
+    expect([...root.querySelectorAll(".toggle")].some((l) => l.textContent?.includes("Cataloged images only"))).toBe(false);
     expect(tiles(root)).toBe(3);
   });
 });
@@ -129,7 +129,7 @@ describe("photo links (#photo=<path>)", () => {
   });
 
   it("explains a link to a photo that is hidden or missing", async () => {
-    history.replaceState(null, "", "/private.html#photo=b.jpg");
+    history.replaceState(null, "", "/family.html#photo=b.jpg");
     start({ catalogToggle: true });
     await flush();
     expect(lightbox().hidden).toBe(true);
@@ -205,5 +205,78 @@ describe("year / place drop-downs", () => {
     const info = document.querySelector(".lightbox .info")!.textContent!;
     expect(info).toContain("Year1986");
     expect(info).toContain("PlacePriene");
+  });
+});
+
+describe("default grouping", () => {
+  const checked = (root: HTMLElement) =>
+    root.querySelector('.seg button[aria-checked="true"]')?.getAttribute("data-mode");
+  const open = async (url: string) => {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", url);
+    const root = document.createElement("div");
+    document.body.append(root);
+    startApp(root, cfg, { load: async () => buildPhotos(CAT, IDX, cfg.imageBase) });
+    await flush();
+    return root;
+  };
+  it("is Location when the URL doesn't name one", async () => {
+    expect(checked(await open("/"))).toBe("location");
+  });
+  it("follows #group= from the URL, and ignores unknown values", async () => {
+    expect(checked(await open("/#group=date"))).toBe("date");
+    expect(checked(await open("/#group=nonsense"))).toBe("location");
+  });
+});
+
+describe("Export and Captions (grid)", () => {
+  const CAT2 = "path|caption|credits|license|tags\nc.jpg|Third|||t\na.jpg|First|||t\n";
+  async function open(url = "/") {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", url);
+    const root = document.createElement("div");
+    document.body.append(root);
+    startApp(root, cfg, { catalogToggle: true, exportName: "data/catalogs/mss.cex",
+      load: async () => buildPhotos(CAT2, IDX, cfg.imageBase) });
+    await flush();
+    return root;
+  }
+
+  it("Export downloads the shown photos' catalog rows, honouring filters and order", async () => {
+    let blob: Blob | null = null;
+    URL.createObjectURL = vi.fn((b: Blob) => { blob = b; return "blob:x"; });
+    URL.revokeObjectURL = vi.fn();
+    let downloaded = "";
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      downloaded = this.download;
+    });
+    const root = await open();
+    const search = root.querySelector<HTMLInputElement>('input[type="search"]')!;
+    search.value = "first";
+    search.dispatchEvent(new Event("input"));
+    root.querySelector<HTMLButtonElement>(".export")!.click();
+    expect(downloaded).toBe("mss-selection.cex");
+    expect(await blob!.text()).toBe("path|caption|credits|license|tags\na.jpg|First|||t\n");
+
+    search.value = "";
+    search.dispatchEvent(new Event("input"));
+    root.querySelector<HTMLButtonElement>(".export")!.click();
+    expect((await blob!.text()).split("\n").slice(1, 3)).toEqual(["c.jpg|Third|||t", "a.jpg|First|||t"]); // catalog order
+    click.mockRestore();
+  });
+
+  it("Captions is off by default; ticking it shows captions and records captions=1", async () => {
+    const root = await open();
+    const main = root.querySelector("main")!;
+    const box = [...root.querySelectorAll<HTMLLabelElement>(".toggle")].find((l) => l.textContent?.includes("Captions"))!
+      .querySelector("input")!;
+    expect(box.checked).toBe(false);
+    expect(main.classList.contains("with-captions")).toBe(false);
+    expect([...root.querySelectorAll(".tile-caption")].map((c) => c.textContent)).toEqual(["Third", "First"]);
+    box.click();
+    expect(main.classList.contains("with-captions")).toBe(true);
+    expect(location.hash).toContain("captions=1");
+    const again = await open("/#captions=1");
+    expect(again.querySelector("main")!.classList.contains("with-captions")).toBe(true);
   });
 });

@@ -5,7 +5,7 @@
 //   npm run check-release -- v1.0.0  # or an explicit tag
 //
 // Verifies that the tag matches src/package.json's version, isn't already used,
-// and that docs/index.html was built from that version. private.html is not checked:
+// and that docs/index.html was built from that version. family.html is not checked:
 // Neel places it wherever he likes under docs/.
 // Prints the git commands to run if everything is in order.
 import { readFile } from "node:fs/promises";

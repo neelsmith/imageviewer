@@ -72,8 +72,8 @@ describe("local.html", () => {
     await settle(root);
     expect(read(root)).toEqual({
       crumbs: "Family", sub: ["misc", "stones"], catalog: "catalog.cex",
-      // Grouped by month (newest first); within a month, catalog order.
-      tiles: ["Second stone", "First stone", "Park"], count: "3 of 3 cataloged photos",
+      // Grouped by location (the default): photos with GPS, then "No location"; catalog order within each.
+      tiles: ["First stone", "Second stone", "Park"], count: "3 of 3 cataloged photos",
     });
 
     // No catalog: just this folder's own photos.
@@ -85,7 +85,7 @@ describe("local.html", () => {
     // Into a subfolder via its button; breadcrumb follows.
     await navigate(root, () => root.querySelector<HTMLButtonElement>(".subfolder:last-child")!.click());
     expect(read(root)).toMatchObject({ crumbs: "Family / stones", sub: [], catalog: null,
-      tiles: ["s2.heic", "s1.heic"] });
+      tiles: ["s1.heic", "s2.heic"] }); // s1 has GPS, so its location group comes first
 
     // Back to the top via the breadcrumb, then include subfolders.
     await navigate(root, () => root.querySelector<HTMLButtonElement>(".crumbs button")!.click());
@@ -105,7 +105,7 @@ describe("local.html", () => {
     const imgs = [...root.querySelectorAll<HTMLImageElement>(".tile img")];
     expect(imgs.length).toBe(3);
     expect(imgs.every((i) => i.src.startsWith("blob:"))).toBe(true);
-    root.querySelector<HTMLButtonElement>('button[data-mode="location"]')!.click();
+    expect(root.querySelector('button[data-mode="location"]')!.getAttribute("aria-checked")).toBe("true");
     expect([...root.querySelectorAll(".group h2")].map((h) => h.firstChild!.textContent))
       .toEqual(["39.30° N, 76.60° W", "No location"]);
   });

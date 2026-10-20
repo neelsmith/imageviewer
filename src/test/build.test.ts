@@ -14,17 +14,17 @@ const selfContained = (html: string) => {
 };
 
 describe("production build", () => {
-  it("emits four self-contained pages: index.html, private.html, private-catalogs.html, local.html", async () => {
+  it("emits four self-contained pages: index.html, family.html, private-catalogs.html, local.html", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "iv-build-"));
     const common = { root: resolve(__dirname, ".."), configFile: resolve(__dirname, "../vite.config.ts"),
       logLevel: "silent" as const };
     await build({ ...common, build: { outDir, emptyOutDir: true } });
-    await build({ ...common, mode: "private", build: { outDir, emptyOutDir: false } });
+    await build({ ...common, mode: "family", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "private-catalogs", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "local-folders", build: { outDir, emptyOutDir: false } });
-    expect((await readdir(outDir)).sort()).toEqual(["index.html", "local.html", "private-catalogs.html", "private.html"]);
+    expect((await readdir(outDir)).sort()).toEqual(["family.html", "index.html", "local.html", "private-catalogs.html"]);
 
-    const priv = await readFile(join(outDir, "private.html"), "utf8");
+    const priv = await readFile(join(outDir, "family.html"), "utf8");
     selfContained(priv);
     expect(priv).toContain("Remember on this device");
     expect(priv).not.toContain("catalog_of_catalogs.cex");
