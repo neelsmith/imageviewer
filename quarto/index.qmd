@@ -3,9 +3,24 @@ title: "Image viewers"
 ---
 
 
-The github project at [https://github.com/neelsmith/imageviewer](https://github.com/neelsmith/imageviewer) hosts apps for light-table and zoomable/pannable display of individual images, implemented in self-contained HTML files that can be run locally or served on the web. Its github pages site hosts an [example installation](https://neelsmith.github.io/imageviewer/catalogs.html).
+The [`imageviewer` github repository](https://github.com/neelsmith/imageviewer) hosts apps for light-table and zoomable/pannable display of individual images. All the apps are implemented in self-contained HTML files that can be run locally or served on the web. They all support optionally cataloging images in simple delimited-text files. 
 
-The apps support cataloging images in simple delimited-text files, and allow users to filter the light-table display by cataloged data, or by date and location data encoded in the images.
+In the light-table view, users can filter the selection by cataloged data, or by date and location data encoded in the images. 
+
+![Light-table view](./imgs/lighttable.png){.lightbox}
+
+
+In the zoomable/pannable view of individual images, users can select and save regions of interest. The apps' URLs allow users to address regions of interest with an HTML `roi` parameter, like [this example](https://neelsmith.github.io/imageviewer/catalogs.html#catalog=data%2Fcatalogs%2Flips7.cex&photo=leiden-pliny%2FIMG_1203.jpeg&roi=0.4134%2C0.3915%2C0.1681%2C0.0205%3B0.4103%2C0.5318%2C0.1465%2C0.0342).
+
+
+
+![Image with selected regions of interest](./imgs/citable.png){.lightbox}
+
+
+The github pages for `imageviewer` hosts an example installation of the [catalogs.html](https://neelsmith.github.io/imageviewer/catalogs.html) app for viewing images by catalog.
+
+
+
 
 Learn more about:
 
