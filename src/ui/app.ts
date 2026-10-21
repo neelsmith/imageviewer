@@ -6,7 +6,7 @@ import { readHash, withHash } from "../lib/hash";
 import { versionInfo } from "../lib/version";
 import { ZoomViewer } from "./zoom-viewer";
 import { exportFileName, photosToCex } from "../lib/export";
-import { formatRoi, formatRois, parseRois, roiUrn, type Roi } from "../lib/roi";
+import { formatRoi, formatRois, parseRois, roiUrn, type Roi } from "cite-roi";
 import { RoiLayer } from "./roi-layer";
 import type { ImageProvider } from "./local/images";
 

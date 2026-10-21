@@ -383,3 +383,14 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   warning (catalog apps: images.cex; local/www-browse: folder) is a folded <details>; 'Show list'
   unfolds each missing path with its caption. All five apps.
 - 129 Vitest pass; browser check of catalogs.html folded/unfolded. App change (Neel already at 2.0.0).
+
+## 2026-10-20 — session 29: region math from the shared cite-roi package
+
+- `src/lib/roi.ts` and `src/test/roi.test.ts` moved to the new repo
+  https://github.com/neelsmith/cite-roi (v1.0.0, identical code and tests), shared with iiif-cite.
+  `src/package.json` now depends on `github:neelsmith/cite-roi#v1.0.0` (lock entry over https);
+  `ui/app.ts` and `ui/roi-layer.ts` import from `cite-roi`. See development.md "Region selections".
+- 123 Vitest pass (the 6 roi tests now run in cite-roi); typecheck clean. All five built pages are
+  byte-identical to before the change, so this is not an app change (no version bump needed).
+- Built and tested in a Linux scratch copy; `src/node_modules` reinstalled for the Mac with
+  `npm ci --os=darwin --cpu=arm64`. Not committed.

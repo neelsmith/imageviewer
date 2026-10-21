@@ -157,7 +157,7 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
 - Catalog column `urn` (optional): the image's CITE2 URN; shown in Export (.cex) when used.
 - Select button in the zoom bar (or Shift-drag anytime) draws boxes; in select mode click a box
   to make it current, drag to move, corner handles to resize, Delete removes, Esc leaves select
-  mode. Boxes are fractions of the full image (`lib/roi.ts`), redrawn on every zoom/pan
+  mode. Boxes are fractions of the full image (`cite-roi` package, below), redrawn on every zoom/pan
   (`ui/roi-layer.ts`, ZoomViewer `onViewChange`/`claimPointer`/`state`/`localPoint`).
 - Info panel lists `x,y,w,h` (4 decimals) and `<urn>@x,y,w,h` (existing `@…` replaced), with
   Copy, Download (.txt, URNs), Copy all (URNs if the photo has a urn, else x,y,w,h; one per line), Clear all.
@@ -165,3 +165,9 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
   the open photo's boxes are in the hash as `roi=x,y,w,h;x,y,w,h` (shareable). Grid button
   "Export selections (n)" downloads every URN from this session (photos without a urn as
   `// path@x,y,w,h` comments). Not saved in the browser, by design.
+- The region math (former `lib/roi.ts` and its tests) lives in the shared package
+  [cite-roi](https://github.com/neelsmith/cite-roi), also used by iiif-cite:
+  `"cite-roi": "github:neelsmith/cite-roi#v1.0.0"` in `src/package.json`. To change it: edit and
+  test in `../cite-roi`, tag a release, then `npm install github:neelsmith/cite-roi#vX.Y.Z` here and
+  check that `package-lock.json` resolves it as `git+https://` (npm may write `git+ssh://`, which
+  fails without a GitHub SSH key).
