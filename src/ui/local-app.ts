@@ -55,7 +55,7 @@ export function localSource(deps: { readExif: LocalAppDeps["readExif"]; decoder:
 }
 
 /**
- * local.html: browse a folder on this computer. The person opens a folder (folder
+ * local-image-viewer.html: browse a folder on this computer. The person opens a folder (folder
  * picker, upload-style control or drag-and-drop); then the shared folder browser takes
  * over (subfolders, catalogs, grid, photo view).
  */

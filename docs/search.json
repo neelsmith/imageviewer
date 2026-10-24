@@ -43,7 +43,18 @@
     "href": "www/index.html",
     "title": "Using imageviewer with a web server",
     "section": "",
-    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.",
+    "text": "Warning\n\n\n\nVersion 2.0 documentation is not yet in place.\nAny directory on a web server can serve as the image source.",
+    "crumbs": [
+      "Public servers",
+      "Using `imageviewer` with a web server"
+    ]
+  },
+  {
+    "objectID": "www/index.html#files-on-github",
+    "href": "www/index.html#files-on-github",
+    "title": "Using imageviewer with a web server",
+    "section": "Files on github??",
+    "text": "Files on github??\n\nServer needs: plain static files at those URLs, nothing more. The data files come from GitHub, so the image server needs no special cross-site permissions (CORS).",
     "crumbs": [
       "Public servers",
       "Using `imageviewer` with a web server"

@@ -53,11 +53,11 @@ export interface AppOptions {
    */
   catalogToggle?: boolean;
   /**
-   * Images that aren't plain URLs (local.html): tiles are requested as they scroll into
+   * Images that aren't plain URLs (local-image-viewer.html): tiles are requested as they scroll into
    * view, and the photo view asks for the full image. `originalUrl` feeds "Open original".
    */
   images?: ImageProvider;
-  /** Shown between the notices and the grid (local.html: subfolders). */
+  /** Shown between the notices and the grid (local-image-viewer.html: subfolders). */
   banner?: HTMLElement;
   /** Mark photos missing from the catalog (dot on tile, "Not in catalog"). Default true. */
   markUncataloged?: boolean;

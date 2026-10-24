@@ -394,3 +394,21 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   byte-identical to before the change, so this is not an app change (no version bump needed).
 - Built and tested in a Linux scratch copy; `src/node_modules` reinstalled for the Mac with
   `npm ci --os=darwin --cpu=arm64`. Not committed.
+
+## 2026-10-24 — session 30: icons for local.html
+
+- (Repo had moved on: 2.0.1, ROI math now from the cite-roi package; my scratch copy needed
+  `npm ci` to fetch it before building.)
+- Neel's scratch/imageviewer.png (1254×1254, RGB, white bg) copied to src/icons/imageviewer.png.
+  New utils/make-icons.mjs (`npm run icons`) + 2 tests; generated src/icons/local/*.png (9 files).
+  New src/build/icons.ts plugin inlines 16/32/48/192 + apple-touch-180 into local.html only;
+  build test checks the links (and their absence elsewhere).
+- 123 Vitest + 38 utils tests pass; 5 pages rebuilt into src/dist/ (local.html 2.28 MB).
+- Visual check of icons on dark/light backgrounds: subject cropped, transparent, shadow OK.
+
+## 2026-10-24 — session 31: local.html → local-image-viewer.html
+
+- Source src/local.html → src/local-image-viewer.html (build mode still `local-folders`,
+  main-local.ts unchanged); vite ENTRIES, appIcons page, comments, tests and notes updated.
+- 123 Vitest pass; 5 pages built; icons still inlined. Stale src/dist/local.html left for Neel
+  to delete. (Saw Neel already has local-image-viewer.html at the repo root and in docs/ — his.)

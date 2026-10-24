@@ -20,7 +20,7 @@ export interface FolderBrowserOptions {
   /** The top folder; navigation can't go above it. */
   top: LocalDir;
   source: PhotoSource;
-  /** Show an "Open another folder" button that calls this (local.html). */
+  /** Show an "Open another folder" button that calls this (local-image-viewer.html). */
   onLeave?: () => void;
   /** Called whenever a view is torn down (e.g. cancel queued HEIC decoding). */
   onTeardown?: () => void;
@@ -40,7 +40,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 /**
- * Folder navigation shared by local.html and www-browse.html: breadcrumb, subfolder buttons,
+ * Folder navigation shared by local-image-viewer.html and www-browse.html: breadcrumb, subfolder buttons,
  * "Include subfolders", and a catalog menu for the .cex files in the folder, all on top of
  * the usual grid + photo view. State lives in the URL hash (#dir=a/b&sub=1&cat=x.cex).
  * Returns stop(), which removes the view and its listeners.

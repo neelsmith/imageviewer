@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 import { inlineAll } from "./build/inline-all.ts";
 import { serveData } from "./build/serve-data.ts";
 import { loadSiteConfig, publicSiteConfig } from "./build/site-config.ts";
+import { appIcons } from "./build/icons.ts";
 
 // The app version lives in package.json ("version") and is baked into both pages.
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
@@ -14,14 +15,14 @@ const { version } = JSON.parse(readFileSync(new URL("./package.json", import.met
 //   vite build --mode private-catalogs → dist/private-catalogs.html (chooser for
 //                                         catalog_of_private_catalogs.cex, password per catalog)
 //   vite build --mode www-browse       → dist/www-browse.html       (web server: folder below the page)
-//   vite build --mode local-folders    → dist/local.html            (local folders; open from disk)
+//   vite build --mode local-folders    → dist/local-image-viewer.html (local folders; open from disk)
 // In `npm run dev` all are served: /catalogs.html, /private.html, /private-catalogs.html,
-// /www-browse.html and /local.html.
+// /www-browse.html and /local-image-viewer.html.
 const FIRST = "catalogs.html"; // built first, so it empties dist/
 const ENTRIES: Record<string, string> = {
   private: "private.html", "private-catalogs": "private-catalogs.html",
   "www-browse": "www-browse.html", // web server: browse the folder below the page (needs images.cex)
-  "local-folders": "local.html", // opened from disk only ("local" is reserved by Vite); carries the HEIC decoder (~2 MB)
+  "local-folders": "local-image-viewer.html", // opened from disk only ("local" is reserved by Vite); carries the HEIC decoder (~2 MB)
 };
 
 export default defineConfig(({ mode, command }) => {
@@ -33,7 +34,8 @@ export default defineConfig(({ mode, command }) => {
     { allowPlaceholders: testing },
   );
   return {
-    plugins: [inlineAll(), serveData("../data")],
+    plugins: [inlineAll(), serveData("../data"),
+      appIcons("local-image-viewer.html", fileURLToPath(new URL("./icons/local", import.meta.url)))],
     define: {
       __APP_VERSION__: JSON.stringify(command === "serve" ? `${version}-dev` : version),
       __SITE_CONFIG__: JSON.stringify(publicSiteConfig(site)),
