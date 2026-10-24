@@ -1,4 +1,4 @@
-import { moveRoi, resizeRoi, roiFromCorners, roiToScreen, screenToFrac, type Handle, type Roi } from "../lib/roi";
+import { moveRoi, resizeRoi, roiFromCorners, roiToScreen, screenToFrac, type Handle, type Roi } from "cite-roi";
 import { wheelFactor } from "../lib/zoom";
 import type { ZoomViewer } from "./zoom-viewer";
 
@@ -6,7 +6,7 @@ const HANDLES: Handle[] = ["nw", "ne", "sw", "se"];
 
 /**
  * Rectangular selections drawn over the photo view. Each is kept as fractions of the
- * full image (lib/roi.ts) and redrawn on every zoom/pan, so it always boxes the same
+ * full image (cite-roi) and redrawn on every zoom/pan, so it always boxes the same
  * part of the photo. In select mode (the "Select" button, or Shift-drag at any time) a
  * drag draws a new box; in select mode a box can be clicked to make it current, dragged
  * to move it, or resized by its corner handles; Delete removes the current one.

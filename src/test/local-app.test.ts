@@ -3,7 +3,7 @@ import { startLocalApp } from "../ui/local-app";
 import { dirFromFileList } from "../lib/local/tree";
 import type { HeicDecoder } from "../ui/local/heic";
 
-// UI flow test for local.html with a fake folder, fake EXIF reader and fake HEIC decoder.
+// UI flow test for local-image-viewer.html with a fake folder, fake EXIF reader and fake HEIC decoder.
 const file = (relPath: string, body = "x") => {
   const f = new File([body], relPath.split("/").pop()!);
   Object.defineProperty(f, "webkitRelativePath", { value: relPath });
@@ -47,11 +47,11 @@ async function navigate(root: HTMLElement, act: () => void) {
   await settle(root);
 }
 
-describe("local.html", () => {
+describe("local-image-viewer.html", () => {
   let root: HTMLElement;
   beforeEach(() => {
     document.body.innerHTML = "";
-    history.replaceState(null, "", "/local.html");
+    history.replaceState(null, "", "/local-image-viewer.html");
     root = document.createElement("div");
     document.body.append(root);
     let n = 0;

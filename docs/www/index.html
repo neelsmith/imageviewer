@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-10-20">
+<meta name="dcterms.date" content="2026-10-23">
 
 <title>Using imageviewer with a web server – imageviewer</title>
 <style>
@@ -178,8 +178,14 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#files-on-github" id="toc-files-on-github" class="nav-link active" data-scroll-target="#files-on-github">Files on github??</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -197,7 +203,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 20, 2026</p>
+      <p class="date">October 23, 2026</p>
     </div>
   </div>
   
@@ -222,8 +228,30 @@ Warning
 <p>Version 2.0 documentation is not yet in place.</p>
 </div>
 </div>
+<p>Any directory on a web server can serve as the image source.</p>
+<ul>
+<li><strong>Image root:</strong> <code>?images=&lt;url&gt;</code> points to the root directory. Every <code>path</code> in the catalogs and <code>images.cex</code> is relative to that root, e.g.&nbsp;<code>slides/Box 3/Box 3_172.JPG</code> → <code>&lt;root&gt;/slides/Box%203/Box%203_172.JPG</code>.</li>
+<li><strong>Index:</strong> <code>npm run images-index</code> runs on a local copy of the folder.
+<ul>
+<li>It finds every image file, skipping files whose names start with <code>.</code> and the <code>_thumbs/</code> folder.</li>
+<li>It writes <code>data/images.cex</code> with each image’s path, date, GPS position, place name and size, read from the photo’s own data. Place names are cached in <code>utils/geocache.json</code>.</li>
+<li>Only paths listed in <code>images.cex</code> show up as uncataloged images.</li>
+</ul></li>
+<li><strong>Thumbnails:</strong> they live in the same root at <code>_thumbs/&lt;path&gt;.jpg</code>. The image’s full name is kept, so <code>a.png</code> becomes <code>_thumbs/a.png.jpg</code>. Each is at most 400 px on its short side and correctly rotated.
+<ul>
+<li><code>npm run thumbnails</code> makes new or out-of-date ones.</li>
+<li><code>npm run cull-thumbnails</code> removes ones whose image is gone.</li>
+<li>If a thumbnail is missing, the app loads the full image instead.</li>
+</ul></li>
+</ul>
+<section id="files-on-github" class="level2">
+<h2 class="anchored" data-anchor-id="files-on-github">Files on github??</h2>
+<ul>
+<li><strong>Server needs:</strong> plain static files at those URLs, nothing more. The data files come from GitHub, so the image server needs no special cross-site permissions (CORS).</li>
+</ul>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -633,7 +661,7 @@ Warning
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p><code>imageviewer</code> version <strong>2.0.0</strong>, website last updated October 20, 2026</p>
+<p><code>imageviewer</code> version <strong>2.0.1</strong>, website last updated October 23, 2026</p>
 </div>
     <div class="nav-footer-right">
       &nbsp;

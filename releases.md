@@ -1,8 +1,12 @@
 # Version info
 
 
-Current version: **1.9.0**
+Current version: **2.0.1**
 
+**2.0.1**, *?*:
+
+- lets users see catalog entries that have no corresponding image
+- switches to using extenal package for work with rois
 
 **2.0.0**, *Oct. 20, 2026*:
 

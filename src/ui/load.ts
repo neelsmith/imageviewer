@@ -2,10 +2,23 @@ import { parseCatalog } from "../lib/catalog";
 import { parseImagesIndex } from "../lib/images";
 import { mergePhotos, type MergeResult } from "../lib/merge";
 import type { AppConfig } from "../lib/config";
+import type { Photo } from "../lib/types";
 import { parseDataUpdated, setDataUpdated } from "../lib/version";
 
+/**
+ * A notice shown above the grid: plain text, or text with a list that the viewer can
+ * unfold (e.g. the catalog entries whose image is missing).
+ */
+export type Notice = string | { text: string; items: string[] };
+
 export interface LoadResult extends MergeResult {
-  warnings: string[];
+  warnings: Notice[];
+}
+
+/** "N … not found" notice listing each missing path (with its caption, if any). */
+export function missingNotice(text: string, missing: string[], photos: Photo[]): Notice {
+  const caption = new Map(photos.map((p) => [p.path, p.caption]));
+  return { text, items: missing.map((m) => (caption.get(m) ? `${m} — ${caption.get(m)}` : m)) };
 }
 
 export async function fetchText(url: string): Promise<string | null> {
@@ -30,7 +43,7 @@ export function buildPhotos(
   imageBase: string,
   opts: BuildOptions = {},
 ): LoadResult {
-  const warnings: string[] = [];
+  const warnings: Notice[] = [];
   const catName = opts.catalogName ?? "catalog.cex";
   const cat = catalogText ? parseCatalog(catalogText) : { entries: [], errors: [] };
   const idx = imagesText ? parseImagesIndex(imagesText) : { records: [], errors: [] };
@@ -43,7 +56,8 @@ export function buildPhotos(
   const merged = mergePhotos(idx.records, cat.entries, imageBase);
   if (opts.catalogedOnly) merged.photos = merged.photos.filter((p) => p.cataloged);
   if (merged.missingFiles.length)
-    warnings.push(`${merged.missingFiles.length} cataloged image(s) not found in images.cex.`);
+    warnings.push(missingNotice(`${merged.missingFiles.length} cataloged image(s) not found in images.cex.`,
+      merged.missingFiles, merged.photos));
   return { ...merged, warnings };
 }
 

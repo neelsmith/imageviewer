@@ -14,7 +14,7 @@ const selfContained = (html: string) => {
 };
 
 describe("production build", () => {
-  it("emits five self-contained pages: catalogs.html, private.html, private-catalogs.html, www-browse.html, local.html", async () => {
+  it("emits five self-contained pages: catalogs.html, private.html, private-catalogs.html, www-browse.html, local-image-viewer.html", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "iv-build-"));
     const common = { root: resolve(__dirname, ".."), configFile: resolve(__dirname, "../vite.config.ts"),
       logLevel: "silent" as const };
@@ -24,7 +24,7 @@ describe("production build", () => {
     await build({ ...common, mode: "www-browse", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "local-folders", build: { outDir, emptyOutDir: false } });
     expect((await readdir(outDir)).sort())
-      .toEqual(["catalogs.html", "local.html", "private-catalogs.html", "private.html", "www-browse.html"]);
+      .toEqual(["catalogs.html", "local-image-viewer.html", "private-catalogs.html", "private.html", "www-browse.html"]);
 
     const priv = await readFile(join(outDir, "private.html"), "utf8");
     selfContained(priv);
@@ -40,11 +40,16 @@ describe("production build", () => {
     selfContained(pc);
     expect(pc).toContain("catalog_of_private_catalogs.cex");
 
-    const local = await readFile(join(outDir, "local.html"), "utf8");
+    const local = await readFile(join(outDir, "local-image-viewer.html"), "utf8");
     selfContained(local);
     expect(local).toContain("_heif_context_alloc"); // the HEIC decoder is inside
     expect(local).toContain("Choose a folder");
-    // The decoder (~2 MB) is only in local.html.
+    // App icons (src/icons/local, made by utils/make-icons.mjs) are inlined into local-image-viewer.html only.
+    for (const sizes of ["16x16", "32x32", "48x48", "192x192"])
+      expect(local).toMatch(new RegExp(`<link[^>]*rel="icon"[^>]*sizes="${sizes}"[^>]*href="data:image/png;base64,`));
+    expect(local).toMatch(/<link[^>]*rel="apple-touch-icon"[^>]*href="data:image\/png;base64,/);
+    for (const html of [index, priv, pc]) expect(html).not.toContain('rel="apple-touch-icon"');
+    // The decoder (~2 MB) is only in local-image-viewer.html.
     for (const html of [index, priv, pc]) expect(html).not.toContain("_heif_context_alloc");
     expect(local.length).toBeGreaterThan(1_500_000);
 

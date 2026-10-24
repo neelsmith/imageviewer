@@ -366,3 +366,20 @@ describe("Copy all selections", () => {
     }
   });
 });
+
+describe("missing catalog entries notice", () => {
+  it("shows the count, and unfolds to list each missing path with its caption", async () => {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", "/");
+    const root = document.createElement("div");
+    document.body.append(root);
+    const CATM = "path|caption|credits|license|tags\na.jpg|A|||t\ngone1.jpg|First gone|||t\nsub/gone2.jpg||||t\n";
+    startApp(root, cfg, { load: async () => buildPhotos(CATM, IDX, cfg.imageBase) });
+    await flush();
+    const details = root.querySelector<HTMLDetailsElement>(".notices details")!;
+    expect(details.querySelector("summary")!.textContent).toBe("2 cataloged image(s) not found in images.cex. Show list");
+    expect(details.open).toBe(false); // folded by default
+    expect([...details.querySelectorAll("ul code")].map((c) => c.textContent))
+      .toEqual(["gone1.jpg — First gone", "sub/gone2.jpg"]);
+  });
+});

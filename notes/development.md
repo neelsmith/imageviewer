@@ -22,10 +22,10 @@ in the published HTML.
 ```sh
 cd src
 npm install
-npm run dev          # http://localhost:5173/catalogs.html (+ /private.html, /private-catalogs.html, /www-browse.html, /local.html) — reads ../data/ from the local repo
+npm run dev          # http://localhost:5173/catalogs.html (+ /private.html, /private-catalogs.html, /www-browse.html, /local-image-viewer.html) — reads ../data/ from the local repo
 npm test             # Vitest unit tests (lib/)
 npm run typecheck
-npm run build        # → src/dist/catalogs.html, private.html, private-catalogs.html, www-browse.html, local.html, each self-contained
+npm run build        # → src/dist/catalogs.html, private.html, private-catalogs.html, www-browse.html, local-image-viewer.html, each self-contained
 ```
 
 URL options: `?branch=<name>` (data from that branch of the GitHub repo, default `main`),
@@ -48,9 +48,9 @@ grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + light
 | `private.html` (source `src/private.html`, `main-private.ts`; build mode `private`) | `data/catalog.cex` + every image in `data/images.cex`; "Cataloged images only" toggle (default on; off = `#all=1`) | yes (if set) |
 | `private-catalogs.html` (source `src/private-catalogs.html`, `main-private-catalogs.ts`) | menu from `data/catalog_of_private_catalogs.cex`; the chosen catalog's images (same view as catalogs.html) | per catalog, from the list's optional `password` column |
 | `www-browse.html` (source `src/www-browse.html`, `main-www-browse.ts`; build mode `www-browse`) | the folder below the page on a web server, from its `images.cex` — see below | no |
-| `local.html` (source `src/local.html`, `main-local.ts`; build mode `local-folders`) | a folder on this computer, opened from disk — see below | no |
+| `local-image-viewer.html` (source `src/local-image-viewer.html`, `main-local.ts`; build mode `local-folders`) | a folder on this computer, opened from disk — see below | no |
 
-Dev URLs: http://localhost:5173/catalogs.html, /private.html, /private-catalogs.html, /www-browse.html and /local.html
+Dev URLs: http://localhost:5173/catalogs.html, /private.html, /private-catalogs.html, /www-browse.html and /local-image-viewer.html
 (`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
 root, e.g. `data/catalogs/mss.cex`.
 
@@ -99,14 +99,14 @@ bakes it into both pages, shown as a small "vX.Y.Z" link to the GitHub release; 
 shows "vX.Y.Z-dev". Data updates (catalogs, images.cex) are not releases.
 
 1. Bump `"version"` in `src/package.json`; add notes to `releases.md` (Neel's file).
-2. `cd src && npm run build`, copy `dist/catalogs.html`, `dist/private.html` and `dist/private-catalogs.html` to `docs/` (www-browse.html goes to the nginx server; local.html is a release download).
+2. `cd src && npm run build`, copy `dist/catalogs.html`, `dist/private.html` and `dist/private-catalogs.html` to `docs/` (www-browse.html goes to the nginx server; local-image-viewer.html is a release download).
 3. `cd ../utils && npm run check-release` (tag defaults to v + package.json version) — checks tag format, match with
    package.json, tag not already used, and that docs/catalogs.html embeds this version
    (private.html and private-catalogs.html aren't checked — they may live anywhere under docs/).
 4. Commit, then `git tag -a vX.Y.Z -m "Release vX.Y.Z"` and `git push --follow-tags`.
 5. Optional: GitHub → Releases → draft from the tag, attach the two HTML files.
 
-## local.html (local folders)
+## local-image-viewer.html (local folders)
 
 Opened from disk (double-click); **not** copied to `docs/` — attach it to GitHub releases.
 ~2.2 MB because it carries the HEIC decoder (libheif-js 1.23.5, LGPL-3.0, WebAssembly).
@@ -146,7 +146,7 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
 - Thumbnails `_thumbs/<path>.jpg`; missing → the original (JPEG/PNG) or, for HEIC, the thumbnail
   inside the file decoded in the browser (downloads the whole HEIC). sharp can't make HEIC
   thumbnails, so HEIC tiles always take that path for now.
-- Navigation, catalogs, Export, Captions as in local.html (shared `ui/folder-browser.ts`); state in
+- Navigation, catalogs, Export, Captions as in local-image-viewer.html (shared `ui/folder-browser.ts`); state in
   the hash, so links to a folder/photo work for anyone. Paths are checked (`lib/web/paths.ts`):
   no `..`, absolute or scheme paths; only images and listed catalogs are reachable.
 - Can run the tools on the server (needs Node + `npm install` in utils/, network for place names)
@@ -157,7 +157,7 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
 - Catalog column `urn` (optional): the image's CITE2 URN; shown in Export (.cex) when used.
 - Select button in the zoom bar (or Shift-drag anytime) draws boxes; in select mode click a box
   to make it current, drag to move, corner handles to resize, Delete removes, Esc leaves select
-  mode. Boxes are fractions of the full image (`lib/roi.ts`), redrawn on every zoom/pan
+  mode. Boxes are fractions of the full image (`cite-roi` package, below), redrawn on every zoom/pan
   (`ui/roi-layer.ts`, ZoomViewer `onViewChange`/`claimPointer`/`state`/`localPoint`).
 - Info panel lists `x,y,w,h` (4 decimals) and `<urn>@x,y,w,h` (existing `@…` replaced), with
   Copy, Download (.txt, URNs), Copy all (URNs if the photo has a urn, else x,y,w,h; one per line), Clear all.
@@ -165,3 +165,19 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
   the open photo's boxes are in the hash as `roi=x,y,w,h;x,y,w,h` (shareable). Grid button
   "Export selections (n)" downloads every URN from this session (photos without a urn as
   `// path@x,y,w,h` comments). Not saved in the browser, by design.
+- The region math (former `lib/roi.ts` and its tests) lives in the shared package
+  [cite-roi](https://github.com/neelsmith/cite-roi), also used by iiif-cite:
+  `"cite-roi": "github:neelsmith/cite-roi#v1.0.0"` in `src/package.json`. To change it: edit and
+  test in `../cite-roi`, tag a release, then `npm install github:neelsmith/cite-roi#vX.Y.Z` here and
+  check that `package-lock.json` resolves it as `git+https://` (npm may write `git+ssh://`, which
+  fails without a GitHub SSH key).
+
+## local-image-viewer.html icons
+
+- Source picture: `src/icons/imageviewer.png` (white background). `cd utils && npm run icons`
+  (`make-icons.mjs`, sharp) removes the edge-connected white background (light grey shadow →
+  translucent black), crops to the subject, pads to a square and writes `src/icons/local/`:
+  `icon-{16,32,48,64,128,192,512,1024}.png` (transparent) and `apple-touch-icon-180.png`
+  (opaque white). Re-run only when the picture changes; commit the PNGs.
+- Build: `build/icons.ts` (Vite plugin `appIcons`) inlines 16/32/48/192 + the Apple 180 icon
+  as data: URLs into local-image-viewer.html only (~+100 KB). Missing files → warning, build continues.

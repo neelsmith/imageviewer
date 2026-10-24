@@ -4,7 +4,7 @@ import type { ImageRecord, Photo } from "../lib/types";
 import { readHash, withHash } from "../lib/hash";
 import { collect, findDir, isCatalogName, isImageName, type LocalDir, type LocalFile } from "../lib/local/tree";
 import { startApp, type AppHandle } from "./app";
-import type { LoadResult } from "./load";
+import { missingNotice, type LoadResult, type Notice } from "./load";
 import type { ImageProvider } from "./local/images";
 
 /** Where photos and their metadata come from (local files, or a web server's index). */
@@ -20,7 +20,7 @@ export interface FolderBrowserOptions {
   /** The top folder; navigation can't go above it. */
   top: LocalDir;
   source: PhotoSource;
-  /** Show an "Open another folder" button that calls this (local.html). */
+  /** Show an "Open another folder" button that calls this (local-image-viewer.html). */
   onLeave?: () => void;
   /** Called whenever a view is torn down (e.g. cancel queued HEIC decoding). */
   onTeardown?: () => void;
@@ -40,7 +40,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 /**
- * Folder navigation shared by local.html and www-browse.html: breadcrumb, subfolder buttons,
+ * Folder navigation shared by local-image-viewer.html and www-browse.html: breadcrumb, subfolder buttons,
  * "Include subfolders", and a catalog menu for the .cex files in the folder, all on top of
  * the usual grid + photo view. State lives in the URL hash (#dir=a/b&sub=1&cat=x.cex).
  * Returns stop(), which removes the view and its listeners.
@@ -86,7 +86,7 @@ export function browseFolder(root: HTMLElement, opts: FolderBrowserOptions): { s
     const id = ++routeId;
     teardown();
     const h = readHash(location.hash);
-    const warnings: string[] = [];
+    const warnings: Notice[] = [];
     let dir = await findDir(top, h.dir ?? "");
     if (!dir) { warnings.push(`Folder “${h.dir}” was not found.`); dir = top; }
     const listing = await dir.list();
@@ -123,7 +123,8 @@ export function browseFolder(root: HTMLElement, opts: FolderBrowserOptions): { s
       const merged = mergePhotos(records, entries, "");
       const photos = merged.photos.map((p) => ({ ...p, url: "", thumb: "" }));
       if (merged.missingFiles.length)
-        warnings.push(`${merged.missingFiles.length} photo(s) listed in ${cat} were not found in this folder.`);
+        warnings.push(missingNotice(`${merged.missingFiles.length} photo(s) listed in ${cat} were not found in this folder.`,
+          merged.missingFiles, merged.photos));
       if (!imgs.length && !listing.dirs.length) warnings.push(opts.emptyMessage ?? "This folder has no photos.");
       return { photos, missingFiles: merged.missingFiles, warnings };
     };

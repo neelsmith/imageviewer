@@ -11,7 +11,8 @@
     "catalog-password": "node catalog-password.mjs",
     "check-release": "node check-release.mjs",
     "thumbnails": "node make-thumbnails.mjs",
-    "cull-thumbnails": "node cull-thumbnails.mjs"
+    "cull-thumbnails": "node cull-thumbnails.mjs",
+    "icons": "node make-icons.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",

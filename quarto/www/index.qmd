@@ -7,3 +7,21 @@ title: "Using `imageviewer` with a web server"
 ::: {.callout-warning}
 Version 2.0 documentation is not yet in place.
 :::
+
+Any directory on a web server can serve as the image source. 
+
+
+- **Image root:** `?images=<url>` points to the root directory. Every `path` in the catalogs and `images.cex` is relative to that root, e.g. `slides/Box 3/Box 3_172.JPG` → `<root>/slides/Box%203/Box%203_172.JPG`.
+- **Index:** `npm run images-index` runs on a local copy of the folder.
+  - It finds every image file, skipping files whose names start with `.` and the `_thumbs/` folder.
+  - It writes `data/images.cex` with each image's path, date, GPS position, place name and size, read from the photo's own data. Place names are cached in `utils/geocache.json`.
+  - Only paths listed in `images.cex` show up as uncataloged images.
+- **Thumbnails:** they live in the same root at `_thumbs/<path>.jpg`. The image's full name is kept, so `a.png` becomes `_thumbs/a.png.jpg`. Each is at most 400 px on its short side and correctly rotated.
+  - `npm run thumbnails` makes new or out-of-date ones.
+  - `npm run cull-thumbnails` removes ones whose image is gone.
+  - If a thumbnail is missing, the app loads the full image instead.
+
+
+## Files on github??
+
+- **Server needs:** plain static files at those URLs, nothing more. The data files come from GitHub, so the image server needs no special cross-site permissions (CORS).
