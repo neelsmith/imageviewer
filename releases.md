@@ -3,10 +3,11 @@
 
 Current version: **2.0.1**
 
-**2.0.1**, *?*:
+**2.0.1**, *Oct. 24, 2026*:
 
 - lets users see catalog entries that have no corresponding image
 - switches to using extenal package for work with rois
+- renames `local.html` to `local-image-viewer.html`, and adds icons for it.
 
 **2.0.0**, *Oct. 20, 2026*:
 
