@@ -181,3 +181,16 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
   (opaque white). Re-run only when the picture changes; commit the PNGs.
 - Build: `build/icons.ts` (Vite plugin `appIcons`) inlines 16/32/48/192 + the Apple 180 icon
   as data: URLs into local-image-viewer.html only (~+100 KB). Missing files → warning, build continues.
+
+## Links by URN (`#urn=…`, all apps)
+
+- `<page>#urn=<image urn>[@x,y,w,h]` (URN percent-encoded; plain `:`/`@` also work) opens the photo
+  whose catalog `urn` matches (ignoring any `@…` in the catalog value), drawing the region if
+  given. app.ts `resolveUrnHash` turns it into `photo=` (+ `roi=`) once photos load.
+- Finding the catalog when the link names none: catalogs.html / private-catalogs.html read the
+  catalogs in list order (catalog-app.ts `findCatalogForUrn`, adds `catalog=`); www-browse.html
+  and local-image-viewer.html read every `.cex` below the top folder (folder-browser.ts, adds
+  `dir=` + `cat=`); private.html has one catalog. No index to maintain; catalog edits apply at once.
+  Not found → a notice. Pasting a new `#urn=` link into an open tab re-routes.
+- Info panel shows URN + "Copy link"; each Selections row has "Link" (region URN link).
+  `lib/urn.ts`: splitUrn, sameImage, findUrnInCatalog, urnLink.

@@ -112,3 +112,38 @@ describe("private-catalogs app", () => {
     await until(() => !!root.querySelector(".catalog-menu"));
   });
 });
+
+describe("catalogs app: links by URN", () => {
+  const LIST: Record<string, string> = {
+    "https://h/data/catalog_of_catalogs.cex": "cex_file|label\ndata/catalogs/one.cex|One\ndata/catalogs/two.cex|Two\n",
+    "https://h/data/catalogs/one.cex": "path|caption|credits|license|tags|urn\no1.jpg|One one|||t|urn:cite2:t:img.v1:o1\n",
+    "https://h/data/catalogs/two.cex": "path|caption|credits|license|tags|urn\nt1.jpg|Two one|||t|\nt2.jpg|Two two|||t|urn:cite2:t:img.v1:t2\n",
+    "https://h/data/images.cex": "path|date|lat|lon|city|region|country|width|height\n",
+  };
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    vi.stubGlobal("fetch", async (url: string) =>
+      url in LIST ? new Response(LIST[url]) : new Response("", { status: 404 }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("finds the catalog holding the URN and opens the photo with its region", async () => {
+    history.replaceState(null, "", "/catalogs.html#urn=" + encodeURIComponent("urn:cite2:t:img.v1:t2@0.5,0.5,0.25,0.25"));
+    const root = document.createElement("div");
+    document.body.append(root);
+    await startCatalogApp(root, cfg);
+    await until(() => document.querySelector(".zoom-img")?.getAttribute("alt") === "Two two");
+    const h = new URLSearchParams(location.hash.slice(1));
+    expect([h.get("catalog"), h.get("photo"), h.get("roi"), h.get("urn")])
+      .toEqual(["data/catalogs/two.cex", "t2.jpg", "0.5000,0.5000,0.2500,0.2500", null]);
+  });
+
+  it("says so when no catalog has the URN", async () => {
+    history.replaceState(null, "", "/catalogs.html#urn=urn:cite2:t:img.v1:nope");
+    const root = document.createElement("div");
+    document.body.append(root);
+    await startCatalogApp(root, cfg);
+    await until(() => !!root.querySelector(".catalog-menu"));
+    expect(root.textContent).toContain("No catalog has an image with URN “urn:cite2:t:img.v1:nope”.");
+  });
+});

@@ -178,3 +178,5 @@ a.version:hover { text-decoration: underline; opacity: 1; }
 .notice-details ul { margin: 6px 0 2px; padding-left: 18px; max-height: 40vh; overflow: auto; }
 .notice-details li { list-style: disc; }
 .notice-details code { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.selections .sel-urn-btns { display: flex; gap: 4px; }
+.lightbox .info .link-btn { display: block; margin-top: 10px; }

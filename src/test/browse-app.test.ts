@@ -108,3 +108,25 @@ describe("www-browse.html", () => {
     expect(read(root).tiles).toEqual(["Edited caption"]);
   });
 });
+
+describe("www-browse.html: links by URN", () => {
+  it("finds the catalog (in a subfolder) with the URN and opens the photo there", async () => {
+    document.body.innerHTML = "";
+    const urnCat = "path|caption|credits|license|tags|urn\nrome2.jpg|Second|||Rome|urn:cite2:t:img.v1:rome2\nrome1.jpg|First|||Rome|\n";
+    const s = server({
+      [BASE + "images.cex"]: () => IMAGES,
+      [BASE + "catalogs.cex"]: () => CATALOGS,
+      [BASE + "trips/catalog.cex"]: () => urnCat,
+    });
+    history.replaceState(null, "", "/images/www-browse.html#urn=" + encodeURIComponent("urn:cite2:t:img.v1:rome2@0,0,0.5,0.5"));
+    const root = document.createElement("div");
+    document.body.append(root);
+    URL.createObjectURL = vi.fn(() => "blob:x");
+    await startBrowseApp(root, { base: BASE, fetchImpl: s.fetchImpl, rootName: "images" });
+    for (let i = 0; i < 100 && document.querySelector(".zoom-img")?.getAttribute("alt") !== "Second"; i++) await tick(10);
+    expect(document.querySelector(".zoom-img")!.getAttribute("alt")).toBe("Second");
+    const h = new URLSearchParams(location.hash.slice(1));
+    expect([h.get("dir"), h.get("cat"), h.get("photo"), h.get("roi"), h.get("urn")])
+      .toEqual(["trips", "catalog.cex", "rome2.jpg", "0.0000,0.0000,0.5000,0.5000", null]);
+  });
+});

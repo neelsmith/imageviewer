@@ -412,3 +412,14 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   main-local.ts unchanged); vite ENTRIES, appIcons page, comments, tests and notes updated.
 - 123 Vitest pass; 5 pages built; icons still inlined. Stale src/dist/local.html left for Neel
   to delete. (Saw Neel already has local-image-viewer.html at the repo root and in docs/ — his.)
+
+## 2026-10-27 — session 32: links by URN
+
+- `#urn=` links in all five apps, resolved by searching catalogs (Neel chose search over an index).
+  See development.md "Links by URN". New lib/urn.ts; app.ts, catalog-app.ts, folder-browser.ts.
+- Tests: 133 Vitest (urn helpers; app: region/whole/unknown/Link button; catalogs app finds the
+  second catalog, not-found notice; www-browse finds catalog in subfolder → dir/cat/photo/roi).
+  Headless Chromium on python http.server: URN+region link opens and draws the box exactly at
+  0.25,0.25,0.5,0.5; Link/Copy link copy encoded links; pasted new URN link re-routes to a HEIC in
+  a subfolder; copied link reopens in a fresh tab.
+- App change → version bump.

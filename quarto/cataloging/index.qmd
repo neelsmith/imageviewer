@@ -3,11 +3,6 @@ title: "Cataloging images"
 ---
 
 
-::: {.callout-warning}
-Documentation is currently incomplete but should be enough to get you started.
-:::
-
-
 Key points:
 
 - put text files named *`.cex` in a folder with images. The catalog can apply to images in subdirectories.

@@ -383,3 +383,44 @@ describe("missing catalog entries notice", () => {
       .toEqual(["gone1.jpg — First gone", "sub/gone2.jpg"]);
   });
 });
+
+describe("links by URN (#urn=…)", () => {
+  const CATU = "path|caption|credits|license|tags|urn\na.jpg|A|||t|urn:cite2:test:img.v1:a\nb.jpg|B|||t|urn:cite2:test:img.v1:b\n";
+  const IDXU = "path|date|lat|lon|city|region|country|width|height\na.jpg|||||||4|3\nb.jpg|||||||4|3\n";
+  async function open(url: string) {
+    document.body.innerHTML = "";
+    history.replaceState(null, "", url);
+    const root = document.createElement("div");
+    document.body.append(root);
+    startApp(root, cfg, { load: async () => buildPhotos(CATU, IDXU, cfg.imageBase) });
+    await flush(); await flush();
+    return root;
+  }
+  it("opens the photo with that URN, drawing the region", async () => {
+    await open("/#urn=" + encodeURIComponent("urn:cite2:test:img.v1:b@0.1,0.2,0.3,0.4"));
+    expect(document.querySelector(".lightbox")!.hasAttribute("hidden")).toBe(false);
+    expect(document.querySelector(".zoom-img")!.getAttribute("alt")).toBe("B");
+    expect([...document.querySelectorAll(".selections li code")][0].textContent).toBe("0.1000,0.2000,0.3000,0.4000");
+    const h = new URLSearchParams(location.hash.slice(1));
+    expect([h.get("urn"), h.get("photo"), h.get("roi")]).toEqual([null, "b.jpg", "0.1000,0.2000,0.3000,0.4000"]);
+    // The info panel shows the URN and offers a link by URN.
+    expect(document.querySelector(".info")!.textContent).toContain("urn:cite2:test:img.v1:b");
+    expect(document.querySelector(".info .link-btn")!.textContent).toBe("Copy link");
+  });
+  it("whole-image URN: opens the photo with no region; unknown URN: a notice", async () => {
+    await open("/#urn=urn:cite2:test:img.v1:a");
+    expect(document.querySelector(".zoom-img")!.getAttribute("alt")).toBe("A");
+    expect(new URLSearchParams(location.hash.slice(1)).get("roi")).toBeNull(); // no region in the link
+    const root = await open("/#urn=urn:cite2:test:img.v1:zzz");
+    expect(document.querySelector(".lightbox")!.hasAttribute("hidden")).toBe(true);
+    expect(root.querySelector(".notices")!.textContent).toContain("No photo with URN “urn:cite2:test:img.v1:zzz”");
+  });
+  it("the Link button copies a link by URN for a region", async () => {
+    let copied = "";
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t: string) => { copied = t; } } });
+    await open("/page.html#photo=a.jpg&roi=0,0,0.5,0.5");
+    [...document.querySelectorAll<HTMLButtonElement>(".selections .link-btn")][0].click();
+    await flush();
+    expect(copied).toBe(`${location.origin}/page.html#urn=${encodeURIComponent("urn:cite2:test:img.v1:a@0.0000,0.0000,0.5000,0.5000")}`);
+  });
+});

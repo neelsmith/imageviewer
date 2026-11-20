@@ -2,6 +2,19 @@
 title: "Canonically citing images and regions of interest"
 ---
 
-::: {.callout-warning}
-Version 2.0 documentation is not yet in place.
-:::
+
+## Cataloging citable images
+
+To cite your images (including with regions of interest) by URN, first give it a CITE2 URN, e.g. `urn:cite2:ns:img.v1:IMG_0042` (namespace, collection and version, then an object id unique within the collection).
+   
+Use this URN in the optional `urn` column of the catalog `.cex`. If you move file, update its `path`; the URN doesn't change.
+
+
+## Citing and linking to regions of interest
+
+
+In the individual photo view, *Select* (or Shift-drag) draws a rectangle; the info panel's Copy/Download/Copy all, or Export selections, give the URNs, including `[@x,y,w,h]` subreference for the selected region..
+
+
+To link to it, use add a `urn` parameter to the URL for your application, like `<app url>?urn=<extended_urn>`. In all the apps (`catalogs.html, private*.html, www-browse.html, local-image-viewer.html`) this will open the image and draw the region.
+

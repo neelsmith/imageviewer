@@ -2,7 +2,15 @@
 title: "Sharing images from pCloud's `Public Folder`"
 ---
 
+You can share images that you put in pCloud's Public Folder.
 
-::: {.callout-warning}
-Version 2.0 documentation is not yet in place.
+Put image files in `~/pCloud Drive/Public Folder` and let pCloud sync them. each file then has a static public URL that looks like  `https://filedn.com/LONG_PATH_CODE/<path within Public Folder>`. E.g.,  a file `Public Folder/trips/rome/IMG_1.jpg` will get a URL ending in `…/trips/rome/IMG_1.jpg`.
+
+You can use these URLs to refer to the image directly. (Ordinary pCloud "share links" open a download page, not the image, so don't use them to refer directly to image data!)
+
+
+::: {.callout-note title="Technical notes"}
+- filedn.com sends no CORS header, so browser `fetch()` of image bytes from
+  another origin fails but links with `<img>` are fine. EXIF etc. is read locally by `utils/`.
+- Moving or renaming a file changes its URL; update the catalogs.  (See [reference section](../reference/sysadmin/).)
 :::
