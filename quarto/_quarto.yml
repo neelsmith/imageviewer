@@ -34,7 +34,7 @@ website:
         file: citable/index.qmd
       - text: "Public servers"
         file: servers.qmd          
-      - text: "Reference"
+      - text: "Managing a server"
         file: reference/index.qmd          
           
 
@@ -54,10 +54,13 @@ website:
         - "---"
         - pcloud/index.qmd
         - www/index.qmd
-    - title: "Reference"
+    - title: "Managing a server"
       contents:
         - reference/index.qmd
         - "---"
-        - reference/build/index.qmd
         - reference/sysadmin/index.qmd
+        - reference/data/index.qmd
+        - reference/utils/index.qmd
+        - reference/build/index.qmd
+
         

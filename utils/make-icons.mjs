@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Make the app icons for local.html from one large square-ish picture on a white background.
+// Make the app icons for local-image-viewer.html from one large square-ish picture on a white background.
 //
 //   npm run icons -- [--src ../src/icons/imageviewer.png] [--out ../src/icons/local]
 //
 // The white background (and the soft grey shadow touching it) is made transparent by a
 // flood fill from the edges, the picture is cropped to its subject, padded to a square,
 // and saved at the sizes browsers use. The build (src/build/icons.ts) inlines the small
-// ones into local.html; the large ones are for other uses (release page, shortcuts).
+// ones into local-image-viewer.html; the large ones are for other uses (release page, shortcuts).
 // Re-run only when the source picture changes, then commit the PNGs.
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";

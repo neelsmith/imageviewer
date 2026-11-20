@@ -7,6 +7,9 @@ The [`imageviewer` github repository](https://github.com/neelsmith/imageviewer) 
 
 In the light-table view, users can filter the selection by cataloged data, or by date and location data encoded in the images. 
 
+
+## Illustration
+
 ![Light-table view](./imgs/lighttable.png){.lightbox}
 
 
@@ -20,7 +23,7 @@ In the zoomable/pannable view of individual images, users can select and save re
 The github pages for `imageviewer` hosts an example installation of the [catalogs.html](https://neelsmith.github.io/imageviewer/catalogs.html) app for viewing images by catalog.
 
 
-
+## More information
 
 Learn more about:
 
@@ -28,3 +31,4 @@ Learn more about:
 - [annotating images with a catalog](./cataloging/)
 - [canonically citing images](./citable/)
 - [sharing images on the web](./servers.qmd)
+- [technical notes](./reference/)
