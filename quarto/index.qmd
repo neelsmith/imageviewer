@@ -3,12 +3,28 @@ title: "Image viewers"
 ---
 
 
-The [`imageviewer` github repository](https://github.com/neelsmith/imageviewer) hosts apps for light-table and zoomable/pannable display of individual images. All the apps are implemented in self-contained HTML files that can be run locally or served on the web. They all support optionally cataloging images in simple delimited-text files. 
+## Overview
 
-In the light-table view, users can filter the selection by cataloged data, or by date and location data encoded in the images. 
+
+The [`imageviewer` github repository](https://github.com/neelsmith/imageviewer) hosts apps for viewing images in local file systems, or on the web.
+
+
+- local viewer
+- cataloged viewers provides access control for cataloged images
+- www-browse
+
+These three kinds of apps are implemented for individual image browsing and for viewing as slide shows.
+
+Image browsing starts with a light-table view; selecting an image gives you a zoomable/pannable display. 
+
+All the apps are implemented in self-contained HTML files that can be run locally or served on the web. They all support optionally cataloging images in simple delimited-text files. 
+
+
 
 
 ## Illustration
+
+This is a light-table view.
 
 ![Light-table view](./imgs/lighttable.png){.lightbox}
 
@@ -20,14 +36,13 @@ In the zoomable/pannable view of individual images, users can select and save re
 ![Image with selected regions of interest](./imgs/citable.png){.lightbox}
 
 
-The github pages for `imageviewer` hosts an example installation of the [catalogs.html](https://neelsmith.github.io/imageviewer/catalogs.html) app for viewing images by catalog.
 
 
 ## More information
 
 Learn more about:
 
-- [browsing local images](./local.qmd)
+- [images in a local file system](./local.qmd)
 - [annotating images with a catalog](./cataloging/)
 - [canonically citing images](./citable/)
 - [sharing images on the web](./servers.qmd)

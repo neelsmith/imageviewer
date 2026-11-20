@@ -2,7 +2,7 @@
 title: "Utilities"
 ---
 
-
+I added the utility as utils/merge-catalogs.mjs. Run it with cd utils && npm run merge-catalogs -- <root>.
 
 Node scripts run from `utils/` (`npm install` once; `npm test` runs their tests).
 `--root` defaults to `localImageRoot` in `src/site.config.json` (the pCloud Public Folder).

@@ -423,3 +423,25 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   0.25,0.25,0.5,0.5; Link/Copy link copy encoded links; pasted new URN link re-routes to a HEIC in
   a subfolder; copied link reopens in a fresh tab.
 - App change → version bump.
+
+## 2026-11-20 — session 33: notes, merge-catalogs
+
+- Parshah repo: app icons from `scratch/nitzavim-1024.jpg` (see parshah `notes/icons.md`).
+- New notes: `pcloud.md`, `citation.md`, `data.md`, `building.md`, `utils.md`.
+- New `utils/merge-catalogs.mjs` (`npm run merge-catalogs -- <root>`): every `catalog.cex` below
+  root → `<root>/catalog.cex` with root-relative paths; folder-by-folder order; columns by name;
+  marker comment guards hand-made root catalogs (`--force`). 7 tests. utils-only, no app version bump.
+  (sharp tests fail in Claude's Linux VM against the Mac node_modules — environment only.)
+- Slide-show pages: `*-slideshow.html`, one per app (Neel chose separate pages over a mode in each
+  app). See development.md → Slide-show pages. npm registry was unreachable from both Claude
+  environments this session, so vitest/vite couldn't run: typechecked with tsc 6, ran the new and
+  the touched UI tests (and app/local/browse/private-catalogs tests) under jsdom with a vitest
+  shim (all pass), and tested the five pages in headless Chromium from an esbuild bundle (timer,
+  pause, keys, wrap, order, year filter, captions, URL restore, #urn=, broken image, www-browse
+  folders/catalog, password screen, local start screen; no console errors). Neel to run `npm test`
+  and `npm run build`. No version bump made.
+- Slide-show transitions: slide (default), dissolve, fade through black, wipe, zoom, none; speed;
+  optional pan & zoom. Checked in headless Chromium (each transition mid-way and settled,
+  backwards slide, rapid key presses, pan pause/resume, reduced motion) and the jsdom tests.
+- Slide-show defaults changed (Neel): 4 s per slide, fade through black, slow.
+- Pan & zoom now on by default (`pan=0` turns it off).

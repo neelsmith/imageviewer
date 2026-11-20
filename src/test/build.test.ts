@@ -14,7 +14,7 @@ const selfContained = (html: string) => {
 };
 
 describe("production build", () => {
-  it("emits five self-contained pages: catalogs.html, private.html, private-catalogs.html, www-browse.html, local-image-viewer.html", async () => {
+  it("emits ten self-contained pages: the five apps and a slide-show page for each", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "iv-build-"));
     const common = { root: resolve(__dirname, ".."), configFile: resolve(__dirname, "../vite.config.ts"),
       logLevel: "silent" as const };
@@ -23,8 +23,12 @@ describe("production build", () => {
     await build({ ...common, mode: "private-catalogs", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "www-browse", build: { outDir, emptyOutDir: false } });
     await build({ ...common, mode: "local-folders", build: { outDir, emptyOutDir: false } });
-    expect((await readdir(outDir)).sort())
-      .toEqual(["catalogs.html", "local-image-viewer.html", "private-catalogs.html", "private.html", "www-browse.html"]);
+    for (const mode of ["slideshow-catalogs", "slideshow-private", "slideshow-private-catalogs", "slideshow-www-browse", "slideshow-local"])
+      await build({ ...common, mode, build: { outDir, emptyOutDir: false } });
+    expect((await readdir(outDir)).sort()).toEqual([
+      "catalogs-slideshow.html", "catalogs.html", "local-image-viewer.html", "local-slideshow.html",
+      "private-catalogs-slideshow.html", "private-catalogs.html", "private-slideshow.html", "private.html",
+      "www-browse-slideshow.html", "www-browse.html"]);
 
     const priv = await readFile(join(outDir, "private.html"), "utf8");
     selfContained(priv);
@@ -58,8 +62,31 @@ describe("production build", () => {
     expect(browse).toContain("images.cex");
     expect(browse).toContain("_heif_context_alloc"); // decoder for HEIC in the photo view
 
+    // Slide-show pages: the slide show inside, each with its app's data source.
+    const show = async (name: string) => {
+      const html = await readFile(join(outDir, name), "utf8");
+      expect(html).not.toMatch(/<script\b[^>]*\bsrc=/);
+      expect(html).toMatch(/<script type="module">[\s\S]*Seconds per slide[\s\S]*<\/script>/);
+      expect(html).toMatch(/<style>[\s\S]*\.slide-stage/);
+      return html;
+    };
+    const sCat = await show("catalogs-slideshow.html");
+    expect(sCat).toContain("catalog_of_catalogs.cex");
+    const sPriv = await show("private-slideshow.html");
+    expect(sPriv).toContain("Remember on this device");
+    const sPc = await show("private-catalogs-slideshow.html");
+    expect(sPc).toContain("catalog_of_private_catalogs.cex");
+    const sBrowse = await show("www-browse-slideshow.html");
+    expect(sBrowse).toContain("images.cex");
+    expect(sBrowse).toContain("_heif_context_alloc");
+    const sLocal = await show("local-slideshow.html");
+    expect(sLocal).toContain("_heif_context_alloc");
+    expect(sLocal).toContain("Choose a folder");
+    expect(sLocal).toMatch(/<link[^>]*rel="apple-touch-icon"[^>]*href="data:image\/png;base64,/);
+    for (const html of [sCat, sPriv, sPc]) expect(html).not.toContain("_heif_context_alloc");
+
     // Release version (no "-dev") is baked into every page.
-    for (const html of [index, priv, pc, local, browse]) {
+    for (const html of [index, priv, pc, local, browse, sCat, sPriv, sPc, sBrowse, sLocal]) {
       // The minifier may quote it with ", ' or `.
       expect(html).toMatch(new RegExp(`["'\`]${pkg.version.replace(/\./g, "\\.")}["'\`]`));
       expect(html).not.toContain(`${pkg.version}-dev`);

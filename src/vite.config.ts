@@ -9,20 +9,29 @@ import { appIcons } from "./build/icons.ts";
 // The app version lives in package.json ("version") and is baked into both pages.
 const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
-// Five single-file apps, built one at a time so each is fully self-contained:
+// Ten single-file apps, built one at a time so each is fully self-contained:
 //   vite build                         → dist/catalogs.html         (catalog chooser, cataloged images only)
 //   vite build --mode private          → dist/private.html          (all images, password screen)
 //   vite build --mode private-catalogs → dist/private-catalogs.html (chooser for
 //                                         catalog_of_private_catalogs.cex, password per catalog)
 //   vite build --mode www-browse       → dist/www-browse.html       (web server: folder below the page)
 //   vite build --mode local-folders    → dist/local-image-viewer.html (local folders; open from disk)
+// and a slide-show page for each (same data and choosers, one photo at a time):
+//   --mode slideshow-catalogs → catalogs-slideshow.html, slideshow-private → private-slideshow.html,
+//   slideshow-private-catalogs → private-catalogs-slideshow.html,
+//   slideshow-www-browse → www-browse-slideshow.html, slideshow-local → local-slideshow.html
 // In `npm run dev` all are served: /catalogs.html, /private.html, /private-catalogs.html,
-// /www-browse.html and /local-image-viewer.html.
+// /www-browse.html and /local-image-viewer.html, and the *-slideshow.html pages.
 const FIRST = "catalogs.html"; // built first, so it empties dist/
 const ENTRIES: Record<string, string> = {
   private: "private.html", "private-catalogs": "private-catalogs.html",
   "www-browse": "www-browse.html", // web server: browse the folder below the page (needs images.cex)
   "local-folders": "local-image-viewer.html", // opened from disk only ("local" is reserved by Vite); carries the HEIC decoder (~2 MB)
+  "slideshow-catalogs": "catalogs-slideshow.html",
+  "slideshow-private": "private-slideshow.html",
+  "slideshow-private-catalogs": "private-catalogs-slideshow.html",
+  "slideshow-www-browse": "www-browse-slideshow.html",
+  "slideshow-local": "local-slideshow.html",
 };
 
 export default defineConfig(({ mode, command }) => {
@@ -35,7 +44,7 @@ export default defineConfig(({ mode, command }) => {
   );
   return {
     plugins: [inlineAll(), serveData("../data"),
-      appIcons("local-image-viewer.html", fileURLToPath(new URL("./icons/local", import.meta.url)))],
+      appIcons(["local-image-viewer.html", "local-slideshow.html"], fileURLToPath(new URL("./icons/local", import.meta.url)))],
     define: {
       __APP_VERSION__: JSON.stringify(command === "serve" ? `${version}-dev` : version),
       __SITE_CONFIG__: JSON.stringify(publicSiteConfig(site)),

@@ -3,7 +3,7 @@ import { mergePhotos } from "../lib/merge";
 import type { ImageRecord, Photo } from "../lib/types";
 import { readHash, withHash } from "../lib/hash";
 import { collect, findDir, isCatalogName, isImageName, type LocalDir, type LocalFile } from "../lib/local/tree";
-import { startApp, type AppHandle } from "./app";
+import { startApp, type AppHandle, type ViewStarter } from "./app";
 import { findUrnInCatalog, splitUrn } from "../lib/urn";
 import { missingNotice, type LoadResult, type Notice } from "./load";
 import type { ImageProvider } from "./local/images";
@@ -27,6 +27,10 @@ export interface FolderBrowserOptions {
   onTeardown?: () => void;
   /** Message added to the notices when the top folder has no photos or subfolders. */
   emptyMessage?: string;
+  /** View for the folder: the grid (default) or the slide show. */
+  view?: ViewStarter;
+  /** Page name for the window title (default "Image Viewer"). */
+  title?: string;
 }
 
 const NO_CATALOG = "none";
@@ -125,7 +129,7 @@ export function browseFolder(root: HTMLElement, opts: FolderBrowserOptions): { s
     // A catalog may name photos in subfolders, so the whole tree is read when one is in use.
     const recursive = includeSub || !!cat;
     const here = dir;
-    document.title = `${here.path ? here.name : top.name} · Image Viewer`;
+    document.title = `${here.path ? here.name : top.name} · ${opts.title ?? "Image Viewer"}`;
     const rel = (path: string) => (here.path ? path.slice(here.path.length + 1) : path);
 
     const load = async (): Promise<LoadResult> => {
@@ -154,7 +158,7 @@ export function browseFolder(root: HTMLElement, opts: FolderBrowserOptions): { s
       return { photos, missingFiles: merged.missingFiles, warnings };
     };
 
-    view = startApp(root, { imageBase: "", dataBase: "" }, {
+    view = (opts.view ?? startApp)(root, { imageBase: "", dataBase: "" }, {
       load, images, localFallback: false, catalogToggle: !!cat, markUncataloged: !!cat,
       toolbar: toolbar(here, catalogs, cat, includeSub),
       banner: subfolders(listing.dirs, rel),

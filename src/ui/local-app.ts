@@ -4,6 +4,7 @@ import { versionInfo } from "../lib/version";
 import { dirFromEntry, dirFromFileList, dirFromHandle, type DirHandleLike, type EntryLike, type LocalDir } from "../lib/local/tree";
 import { coordPlace, mapLimit, metaFromExif, NO_META, type PhotoMeta } from "../lib/local/meta";
 import { browseFolder, type PhotoSource } from "./folder-browser";
+import type { ViewStarter } from "./app";
 import { HeicDecoder } from "./local/heic";
 import { LocalImages, probeNativeHeic } from "./local/images";
 
@@ -14,6 +15,10 @@ export interface LocalAppDeps {
   probeNative?: (f: File) => Promise<boolean>;
   /** Folder picker; default window.showDirectoryPicker when the browser has it. */
   pickDirectory?: (() => Promise<DirHandleLike>) | null;
+  /** View for the opened folder: the grid (default) or the slide show (local-slideshow.html). */
+  view?: ViewStarter;
+  /** Page name on the start screen and in the window title (default "Image Viewer"). */
+  title?: string;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -67,11 +72,12 @@ export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { ope
       ? () => (window as unknown as { showDirectoryPicker(o: object): Promise<DirHandleLike> }).showDirectoryPicker({ mode: "read" })
       : null;
   let browser: { stop(): void } | null = null;
+  const title = deps.title ?? "Image Viewer";
 
   // ---- Start screen ----
   function startScreen(message = "") {
     browser?.stop(); browser = null;
-    document.title = "Image Viewer · local folders";
+    document.title = `${title} · local folders`;
     const buttons: HTMLElement[] = [];
     if (pick) {
       const b = el("button", { type: "button", class: "primary" }, "Choose a folder…");
@@ -101,8 +107,8 @@ export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { ope
       if (entry) open(dirFromEntry(entry)); else startScreen("Please drop a folder (not individual files).");
     });
     root.replaceChildren(el("div", { class: "local-start" },
-      el("h1", {}, "Image Viewer"),
-      el("p", {}, "Browse the photos in a folder on this computer. Nothing is uploaded: the files are read here, in this page."),
+      el("h1", {}, title),
+      el("p", {}, deps.view ? "Show the photos in a folder on this computer as a slide show. Nothing is uploaded: the files are read here, in this page." : "Browse the photos in a folder on this computer. Nothing is uploaded: the files are read here, in this page."),
       el("div", { class: "local-actions" }, ...buttons), drop,
       ...(message ? [el("p", { class: "local-message", role: "alert" }, message)] : []),
       el("p", { class: "local-note" }, pick
@@ -116,7 +122,7 @@ export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { ope
     // A fresh folder starts at its top, without subfolders or catalog choices from before.
     history.replaceState(null, "", location.pathname + location.search);
     browser = browseFolder(root, {
-      top: dir, source,
+      top: dir, source, view: deps.view, title,
       onTeardown: () => decoder.cancelQueued(),
       onLeave: () => { history.replaceState(null, "", location.pathname + location.search); startScreen(); },
     });

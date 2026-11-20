@@ -112,6 +112,9 @@ export interface AppHandle {
   destroy(): void;
 }
 
+/** Starts the view once the data source is chosen: startApp (grid) or startSlideshow. */
+export type ViewStarter = (root: HTMLElement, cfg: AppConfig, opts: AppOptions) => AppHandle;
+
 export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): AppHandle {
   let all: Photo[] = [];
   let warnings: Notice[] = [];

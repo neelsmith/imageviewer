@@ -24,3 +24,5 @@ Image `path`s are relative to the pCloud Public Folder.
   `catalogs.cex` and any `.cex` catalogs from the served or opened folder itself.
 
 The first three also read `last-updated.txt`. `#urn=` links search the same catalogs (see `citation.md`).
+
+The slide-show pages (`*-slideshow.html`) read the same files as their apps.

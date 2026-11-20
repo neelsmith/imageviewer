@@ -49,6 +49,7 @@ grouping, config); `ui/` DOM code (`load.ts` fetches data, `app.ts` grid + light
 | `private-catalogs.html` (source `src/private-catalogs.html`, `main-private-catalogs.ts`) | menu from `data/catalog_of_private_catalogs.cex`; the chosen catalog's images (same view as catalogs.html) | per catalog, from the list's optional `password` column |
 | `www-browse.html` (source `src/www-browse.html`, `main-www-browse.ts`; build mode `www-browse`) | the folder below the page on a web server, from its `images.cex` — see below | no |
 | `local-image-viewer.html` (source `src/local-image-viewer.html`, `main-local.ts`; build mode `local-folders`) | a folder on this computer, opened from disk — see below | no |
+| `*-slideshow.html` (five: `catalogs-`, `private-`, `private-catalogs-`, `www-browse-`, `local-slideshow.html`; `main-*-slideshow.ts`; modes `slideshow-catalogs` …) | same as the matching app, shown as a slide show — see below | as the matching app |
 
 Dev URLs: http://localhost:5173/catalogs.html, /private.html, /private-catalogs.html, /www-browse.html and /local-image-viewer.html
 (`#catalog=<cex_file>` deep-links to a catalog). `cex_file` paths are relative to the repo
@@ -99,7 +100,7 @@ bakes it into both pages, shown as a small "vX.Y.Z" link to the GitHub release; 
 shows "vX.Y.Z-dev". Data updates (catalogs, images.cex) are not releases.
 
 1. Bump `"version"` in `src/package.json`; add notes to `releases.md` (Neel's file).
-2. `cd src && npm run build`, copy `dist/catalogs.html`, `dist/private.html` and `dist/private-catalogs.html` to `docs/` (www-browse.html goes to the nginx server; local-image-viewer.html is a release download).
+2. `cd src && npm run build`, copy `dist/catalogs.html`, `dist/private.html` and `dist/private-catalogs.html` (and their `-slideshow.html` pages) to `docs/` (www-browse.html and www-browse-slideshow.html go to the nginx server; local-image-viewer.html and local-slideshow.html are release downloads).
 3. `cd ../utils && npm run check-release` (tag defaults to v + package.json version) — checks tag format, match with
    package.json, tag not already used, and that docs/catalogs.html embeds this version
    (private.html and private-catalogs.html aren't checked — they may live anywhere under docs/).
@@ -194,3 +195,37 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
   Not found → a notice. Pasting a new `#urn=` link into an open tab re-routes.
 - Info panel shows URN + "Copy link"; each Selections row has "Link" (region URN link).
   `lib/urn.ts`: splitUrn, sameImage, findUrnInCatalog, urnLink.
+
+## Slide-show pages (`*-slideshow.html`)
+
+- One per app, same data source, chooser and passwords (remembered passwords are shared with the
+  grid page): `catalogs-slideshow.html`, `private-slideshow.html`, `private-catalogs-slideshow.html`,
+  `www-browse-slideshow.html` (next to www-browse.html on the server), `local-slideshow.html`
+  (from disk; same icons as local-image-viewer.html).
+- Built as separate Vite modes (`slideshow-catalogs`, `slideshow-private`, `slideshow-private-catalogs`,
+  `slideshow-www-browse`, `slideshow-local`). Each `main-*-slideshow.ts` passes `view: startSlideshow`
+  (and `title`) to the usual starter; `catalog-app.ts`, `folder-browser.ts`, `local-app.ts`,
+  `browse-app.ts` accept `view?: ViewStarter` (default `startApp`). `startSlideshow` takes the
+  same `AppOptions` as `startApp`.
+- `ui/slideshow.ts`: two `<img>` layers cross-fade; the next slide is loaded and decoded in
+  advance, and the timer for the next slide starts only once the current one is on screen (HEIC
+  decoding can be slow). Loops. Unshowable images give a message and the show moves on.
+  Controls: ‹ ❚❚/▶ › counter, seconds box, full screen (stage only). Keys: space/k play-pause,
+  ←/→, F. Click the photo = play/pause; swipe = previous/next. Controls and pointer fade while
+  playing. Screen Wake Lock while playing where supported.
+- Top bar: order (`lib/slideshow.ts`: catalog order as in the grid / oldest first / file name /
+  shuffle), year and place drop-downs, Cataloged images only (private), Captions (on by default).
+- Transitions (`lib/slideshow.ts` keyframes, run with Web Animations on the two `.slide-layer`
+  boxes): fade through black (default), slide (runs the other way for ←/swipe back), dissolve,
+  wipe, zoom, none. Speed quick/normal/slow (0.4/0.8/1.6 s; default slow), capped at half the
+  time per slide.
+  "Pan & zoom" (on by default): slow Ken Burns zoom/drift on each photo (on the `<img>`, so it combines with any
+  transition), paused with the show. Reduced-motion setting → slide/wipe/zoom become a dissolve
+  and pan is off. A new slide during a transition ends the old one at once. Without
+  `element.animate` (jsdom) photos simply replace each other.
+- Hash: `secs=` (1–600, default 4), `order=date|name|shuffle`, `transition=slide|dissolve|wipe|zoom|none`,
+  `speed=quick|normal`, `pan=0` (pan & zoom is on by default), `captions=0`, `photo=` (current
+  slide, updated as it plays so a link resumes there), `urn=` starts at that image, plus the usual
+  `catalog=`, `dir=`/`sub=`/`cat=`, `all=1`, `year=`, `place=`.
+- Tests: `test/slideshow.test.ts` (order, settings), `test/slideshow-app.test.ts` (jsdom flow),
+  `build.test.ts` (ten pages).

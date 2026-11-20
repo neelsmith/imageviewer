@@ -2,7 +2,7 @@ import type { AppConfig } from "../lib/config";
 import { catalogUrl, parseCatalogList, type CatalogChoice } from "../lib/catalogs";
 import { catalogKey, forget } from "../lib/auth";
 import { readHash, withHash } from "../lib/hash";
-import { startApp, type AppHandle } from "./app";
+import { startApp, type AppHandle, type ViewStarter } from "./app";
 import { passwordGate } from "./gate";
 import { versionInfo } from "../lib/version";
 import { fetchText, loadCatalog } from "./load";
@@ -11,6 +11,10 @@ import { findUrnInCatalog, splitUrn } from "../lib/urn";
 export interface CatalogAppOptions {
   /** Catalog list file in the data directory (default catalog_of_catalogs.cex). */
   listFile?: string;
+  /** View for the chosen catalog: the grid (default) or the slide show. */
+  view?: ViewStarter;
+  /** Page name in the menu and the window title (default "Image Viewer"). */
+  title?: string;
 }
 
 /**
@@ -25,6 +29,8 @@ export interface CatalogAppOptions {
  */
 export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: CatalogAppOptions = {}): Promise<void> {
   const listName = opts.listFile ?? "catalog_of_catalogs.cex";
+  const appTitle = opts.title ?? "Image Viewer";
+  const startView = opts.view ?? startApp;
   root.replaceChildren(message("Loading catalogs…"));
   const listUrl = cfg.dataBase + listName;
   const text = await fetchText(listUrl);
@@ -73,14 +79,14 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
     const chosen = catalogs.find((c) => c.file === readHash(location.hash).catalog);
     shown = chosen?.file ?? "";
     if (!chosen) return showMenu(notFound);
-    document.title = `${chosen.label} · Image Viewer`;
+    document.title = `${chosen.label} · ${appTitle}`;
     if (chosen.auth) {
       const ok = await passwordGate(root, chosen.auth,
         { title: chosen.label, storageKey: catalogKey(chosen.file), cancelLabel: "Back to catalogs" });
       if (id !== routeId) return;
       if (!ok) return choose(null);
     }
-    view = startApp(root, cfg, {
+    view = startView(root, cfg, {
       load: () => loadCatalog(cfg, chosen.file, catalogUrl(cfg.dataBase, chosen.file)),
       toolbar: [switcher(chosen)],
       localFallback: false,
@@ -96,7 +102,7 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
   }
 
   function showMenu(notice: string | null = null) {
-    document.title = "Image Viewer";
+    document.title = appTitle;
     const list = document.createElement("ul");
     for (const c of catalogs) {
       const b = document.createElement("button");
@@ -116,7 +122,7 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
     const menu = document.createElement("div");
     menu.className = "catalog-menu";
     const h = document.createElement("h1");
-    h.textContent = "Image Viewer";
+    h.textContent = appTitle;
     const p = document.createElement("p");
     p.textContent = "Choose a catalog:";
     menu.append(h, p, list);
