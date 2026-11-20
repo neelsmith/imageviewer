@@ -3,9 +3,10 @@
 
 Current version: **3.0.0**
 
-**3.0.0**, *?*: 
+**3.0.0**, *NOv. 20, 2026*: 
 
 - adds new utility `merge-catalogs` 
+- adds suite of apps for slide shows
 
 
 **2.0.1**, *Oct. 24, 2026*:
