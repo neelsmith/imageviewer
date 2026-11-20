@@ -1,7 +1,10 @@
 ---
-title: Technical reference
+title: Reference
 ---
 
 
+- [managing publicly served images](./sysadmin/)
+- the [`data/` directory](./data/)
+- [utilities](./utils/)
 - [how to build the apps](./build/)
-- managing public images: [summary reference](./sysadmin/)
+

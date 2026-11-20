@@ -3,17 +3,13 @@ title: "Cataloging images"
 ---
 
 
-::: {.callout-warning}
-Documentation is currently incomplete but should be enough to get you started.
-:::
-
-
-Key points:
+## Summary overview
 
 - put text files named *`.cex` in a folder with images. The catalog can apply to images in subdirectories.
 - columns are separated using pipe (`|`) character as delimiter
 - catalog files have a header line
 - you can have as many catalog files as you like in your file system
+- the structure includes a minimum five columns (`path|caption|credits|license|tags`) with options to include three others (any of `year`, `place` and `urn`).
 
 
 
@@ -26,6 +22,9 @@ Image catalogs must include the following columns:
 - paths are relative to the catalog file
 - tags are comma-separated labels for filtering images
 
+
+Example:
+
 ```
 path|caption|credits|license|tags
 leiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden
@@ -35,8 +34,15 @@ leiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of fr
 
 You may optionally include additional columns for `year` and `place`.
 
-
 ```
 path|caption|credits|license|tags|year|place
 leiden-pliny/IMG_1200.jpeg|Leiden, MS Lipsius 7  in shelving box, overview of front cover and spine.|Photograph Neel Smith, 2019|Public domain (CC0)|Pliny, Leiden, manuscripts|2019|Leiden, NL|
 ```
+
+## Citable images
+
+If your image has a URN for canonical identification and citation, include it in the optional `urn` column.
+
+::: {.callout-note}
+See more about [citing images by URN](../citable/).
+:::

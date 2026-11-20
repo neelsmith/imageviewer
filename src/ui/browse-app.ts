@@ -6,6 +6,7 @@ import { versionInfo } from "../lib/version";
 import { dirFromPaths, isImageName } from "../lib/local/tree";
 import { folderNameFromUrl, safeRelPath } from "../lib/web/paths";
 import { browseFolder, type PhotoSource } from "./folder-browser";
+import type { ViewStarter } from "./app";
 import type { HeicDecoder } from "./local/heic";
 import { WebImages } from "./web/images";
 
@@ -18,6 +19,10 @@ export interface BrowseAppDeps {
   probeNative?: (f: Blob) => Promise<boolean>;
   /** Name shown for the top folder (default: the folder's name from the URL). */
   rootName?: string;
+  /** View for the folder: the grid (default) or the slide show (www-browse-slideshow.html). */
+  view?: ViewStarter;
+  /** Page name in messages and the window title (default "Image Viewer"). */
+  title?: string;
 }
 
 async function getText(fetchImpl: typeof fetch, url: string): Promise<string | null> {
@@ -43,7 +48,7 @@ export async function startBrowseApp(root: HTMLElement, deps: BrowseAppDeps = {}
     const box = document.createElement("div");
     box.className = "local-start";
     const h = document.createElement("h1");
-    h.textContent = "Image Viewer";
+    h.textContent = deps.title ?? "Image Viewer";
     for (const k of kids) {
       const p = document.createElement("p");
       p.append(k);
@@ -98,7 +103,7 @@ export async function startBrowseApp(root: HTMLElement, deps: BrowseAppDeps = {}
     },
   };
   return browseFolder(root, {
-    top, source,
+    top, source, view: deps.view, title: deps.title,
     onTeardown: () => decoder?.cancelQueued(),
     emptyMessage: "This folder has no photos listed in images.cex.",
   });

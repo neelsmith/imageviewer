@@ -13,15 +13,16 @@ const ICONS: { file: string; rel: string; sizes: string }[] = [
 
 /**
  * Add icon <link>s with the PNGs inlined (so the single-file page keeps working from disk)
- * to one page, e.g. local-image-viewer.html. Missing files are skipped with a warning.
+ * to the given page(s), e.g. local-image-viewer.html. Missing files are skipped with a warning.
  */
-export function appIcons(page: string, dir: string): Plugin {
+export function appIcons(pages: string | string[], dir: string): Plugin {
+  const list = Array.isArray(pages) ? pages : [pages];
   return {
     name: "imageviewer:app-icons",
     transformIndexHtml: {
       order: "post",
       handler(_html, ctx) {
-        if (!ctx.filename.endsWith(page)) return;
+        if (!list.some((page) => ctx.filename.endsWith(page))) return;
         const tags: HtmlTagDescriptor[] = [];
         for (const icon of ICONS) {
           const f = join(dir, icon.file);

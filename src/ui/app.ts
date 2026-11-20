@@ -8,6 +8,7 @@ import { ZoomViewer } from "./zoom-viewer";
 import { exportFileName, photosToCex } from "../lib/export";
 import { formatRoi, formatRois, parseRois, roiUrn, type Roi } from "cite-roi";
 import { RoiLayer } from "./roi-layer";
+import { sameImage, splitUrn, urnLink } from "../lib/urn";
 import type { ImageProvider } from "./local/images";
 
 /** Grouping shown when the URL doesn't name one (#group=date|location|tag). */
@@ -110,6 +111,9 @@ export interface AppHandle {
   /** Remove global listeners and the lightbox (before starting another view). */
   destroy(): void;
 }
+
+/** Starts the view once the data source is chosen: startApp (grid) or startSlideshow. */
+export type ViewStarter = (root: HTMLElement, cfg: AppConfig, opts: AppOptions) => AppHandle;
 
 export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): AppHandle {
   let all: Photo[] = [];
@@ -271,6 +275,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       b.addEventListener("click", fn);
       return b;
     };
+    const linkBtn = (urn: string) => linkButton(urn, "Link", "Copy a link that opens this region by its URN");
     const copyBtn = (text: string, title: string) => {
       const b = btn("Copy", title, () => copyText(text).then((ok) => { b.textContent = ok ? "Copied" : "Copy failed"; }));
       return b;
@@ -288,7 +293,8 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
         el("button", { type: "button", class: "sel-num", title: "Make this the current selection" }, String(i + 1)),
         el("code", {}, formatRoi(r)), copyBtn(formatRoi(r), "Copy x,y,w,h"),
         btn("×", "Remove this selection", () => roiLayer!.remove(i)),
-        ...(urn ? [el("code", { class: "sel-urn" }, urn), copyBtn(urn, "Copy CITE2 URN")] : []));
+        ...(urn ? [el("code", { class: "sel-urn" }, urn), el("span", { class: "sel-urn-btns" },
+          copyBtn(urn, "Copy CITE2 URN"), linkBtn(urn))] : []));
       li.querySelector(".sel-num")!.addEventListener("click", () => roiLayer!.select(i));
       return li;
     });
@@ -304,6 +310,29 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
         copyAll(urns.length ? urns : rois.map(formatRoi), urns.length ? "URN" : "x,y,w,h"),
         btn("Clear all", "Remove every selection on this photo", () => roiLayer!.clear()))] : []),
     );
+  }
+
+  /** A button that copies a link opening this page on a URN (#urn=…). */
+  function linkButton(urn: string, label: string, title: string) {
+    const b = el("button", { type: "button", class: "sel-btn link-btn", title }, label);
+    b.addEventListener("click", () => copyText(urnLink(location.href, urn))
+      .then((ok) => { b.textContent = ok ? "Link copied" : "Copy failed"; }));
+    return b;
+  }
+
+  /**
+   * A link by URN (#urn=<image urn>[@x,y,w,h]): find the photo with that urn in this
+   * catalog and turn the key into photo= (and roi= for a region). Returns a warning if
+   * there's no such photo.
+   */
+  function resolveUrnHash(): string | null {
+    const urn = readHash(location.hash).urn;
+    if (!urn) return null;
+    const { base, roi } = splitUrn(urn);
+    const hit = all.find((p) => sameImage(p.urn, base));
+    history.replaceState(history.state, "", withHash(location.hash,
+      { urn: null, photo: hit?.path ?? null, roi: hit && roi ? formatRois([roi]) : null }) || location.pathname + location.search);
+    return hit ? null : `No photo with URN “${base}” was found.`;
   }
 
   /** Open the first photo in the current view with this path; false if there is none. */
@@ -335,12 +364,13 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       ["Date", p.date ? formatDate(p.date) : ""],
       // EXIF/GPS place from images.cex; labelled "Location" when the catalog also names a place.
       [p.placeName ? "Location" : "Place", p.place ? placeLabel(p.place) : ""], ["Tags", p.tags.join(", ")],
-      ["Credits", p.credits], ["License", p.license], ["File", p.path],
+      ["Credits", p.credits], ["License", p.license], ["File", p.path], ["URN", p.urn],
     ];
     lbInfo.replaceChildren(
       ...(p.cataloged || opts.markUncataloged === false ? [] : [el("p", { class: "badge" }, "Not in catalog")]),
       el("dl", {}, ...rows.filter(([, v]) => v).flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
       el("a", { href: opts.images?.originalUrl?.(p) ?? p.url, target: "_blank", rel: "noopener" }, "Open original ↗"),
+      ...(p.urn ? [linkButton(p.urn, "Copy link", "Copy a link that opens this photo by its URN")] : []),
       selBox,
     );
     // Selections: from a link (roi= in the URL) when opening from the URL, else this session's.
@@ -369,6 +399,10 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   }
   // Back/forward, or an edited URL: follow the photo named in the hash.
   const onHashChange = () => {
+    if (readHash(location.hash).urn && all.length) {
+      const problem = resolveUrnHash();
+      if (problem) { warnings = [...warnings, problem]; renderNotices(false); }
+    }
     const path = readHash(location.hash).photo;
     if (!path) { if (!lb.hidden) closeLightbox(); return; }
     if (current >= 0 && visible[current]?.path === path) return;
@@ -483,6 +517,8 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     warnings = r.warnings;
     fillFacets();
     render();
+    const urnProblem = resolveUrnHash();
+    if (urnProblem) warnings = [...warnings, urnProblem];
     // A link to a single photo (#photo=<path>) opens it once the photos are loaded.
     const wanted = readHash(location.hash).photo;
     if (wanted && !openPath(wanted, "none")) {

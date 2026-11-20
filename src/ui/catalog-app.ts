@@ -2,14 +2,19 @@ import type { AppConfig } from "../lib/config";
 import { catalogUrl, parseCatalogList, type CatalogChoice } from "../lib/catalogs";
 import { catalogKey, forget } from "../lib/auth";
 import { readHash, withHash } from "../lib/hash";
-import { startApp, type AppHandle } from "./app";
+import { startApp, type AppHandle, type ViewStarter } from "./app";
 import { passwordGate } from "./gate";
 import { versionInfo } from "../lib/version";
 import { fetchText, loadCatalog } from "./load";
+import { findUrnInCatalog, splitUrn } from "../lib/urn";
 
 export interface CatalogAppOptions {
   /** Catalog list file in the data directory (default catalog_of_catalogs.cex). */
   listFile?: string;
+  /** View for the chosen catalog: the grid (default) or the slide show. */
+  view?: ViewStarter;
+  /** Page name in the menu and the window title (default "Image Viewer"). */
+  title?: string;
 }
 
 /**
@@ -24,6 +29,8 @@ export interface CatalogAppOptions {
  */
 export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: CatalogAppOptions = {}): Promise<void> {
   const listName = opts.listFile ?? "catalog_of_catalogs.cex";
+  const appTitle = opts.title ?? "Image Viewer";
+  const startView = opts.view ?? startApp;
   root.replaceChildren(message("Loading catalogs…"));
   const listUrl = cfg.dataBase + listName;
   const text = await fetchText(listUrl);
@@ -41,21 +48,45 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
   let shown: string | null = null; // catalog file on screen; "" = menu
   let routeId = 0; // a newer route() abandons a password screen still waiting
 
+  /**
+   * A link by URN without a catalog (#urn=…): look through the catalogs in list order
+   * for the one with that image and add catalog= (startApp then opens the photo).
+   * Returns a message if no catalog has it.
+   */
+  async function findCatalogForUrn(id: number): Promise<string | null> {
+    const h = readHash(location.hash);
+    if (!h.urn || h.catalog) return null;
+    const { base } = splitUrn(h.urn);
+    root.replaceChildren(message(`Looking up ${base}…`));
+    for (const c of catalogs) {
+      const text = await fetchText(catalogUrl(cfg.dataBase, c.file));
+      if (id !== routeId) return null;
+      if (text && findUrnInCatalog(text, base)) {
+        history.replaceState(history.state, "", withHash(location.hash, { catalog: c.file }));
+        return null;
+      }
+    }
+    history.replaceState(history.state, "", withHash(location.hash, { urn: null }) || location.pathname + location.search);
+    return `No catalog has an image with URN “${base}”.`;
+  }
+
   async function route() {
     const id = ++routeId;
     view?.destroy();
     view = null;
+    const notFound = await findCatalogForUrn(id);
+    if (id !== routeId) return;
     const chosen = catalogs.find((c) => c.file === readHash(location.hash).catalog);
     shown = chosen?.file ?? "";
-    if (!chosen) return showMenu();
-    document.title = `${chosen.label} · Image Viewer`;
+    if (!chosen) return showMenu(notFound);
+    document.title = `${chosen.label} · ${appTitle}`;
     if (chosen.auth) {
       const ok = await passwordGate(root, chosen.auth,
         { title: chosen.label, storageKey: catalogKey(chosen.file), cancelLabel: "Back to catalogs" });
       if (id !== routeId) return;
       if (!ok) return choose(null);
     }
-    view = startApp(root, cfg, {
+    view = startView(root, cfg, {
       load: () => loadCatalog(cfg, chosen.file, catalogUrl(cfg.dataBase, chosen.file)),
       toolbar: [switcher(chosen)],
       localFallback: false,
@@ -70,8 +101,8 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
     location.hash = withHash(location.hash, { catalog: c ? c.file : null, photo: null, year: null, place: null }) || "#";
   }
 
-  function showMenu() {
-    document.title = "Image Viewer";
+  function showMenu(notice: string | null = null) {
+    document.title = appTitle;
     const list = document.createElement("ul");
     for (const c of catalogs) {
       const b = document.createElement("button");
@@ -91,10 +122,11 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
     const menu = document.createElement("div");
     menu.className = "catalog-menu";
     const h = document.createElement("h1");
-    h.textContent = "Image Viewer";
+    h.textContent = appTitle;
     const p = document.createElement("p");
     p.textContent = "Choose a catalog:";
     menu.append(h, p, list);
+    if (notice) menu.append(message(notice));
     if (errors.length) menu.append(message(errors.join(" ")));
     menu.append(versionInfo());
     root.replaceChildren(menu);
@@ -112,10 +144,12 @@ export async function startCatalogApp(root: HTMLElement, cfg: AppConfig, opts: C
     return sel;
   }
 
-  // Re-route only when the catalog changes (back/forward, edited URL, menu or switcher).
+  // Re-route only when the catalog changes (back/forward, edited URL, menu or switcher),
+  // or for a pasted link by URN that names no catalog.
   window.addEventListener("hashchange", () => {
-    const wanted = catalogs.find((c) => c.file === readHash(location.hash).catalog)?.file ?? "";
-    if (wanted !== shown) route();
+    const h = readHash(location.hash);
+    const wanted = catalogs.find((c) => c.file === h.catalog)?.file ?? "";
+    if (wanted !== shown || (h.urn && !h.catalog)) route();
   });
   route();
 }
