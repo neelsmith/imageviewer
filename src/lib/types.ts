@@ -28,6 +28,8 @@ export interface ImageRecord {
   place: Place | null;
   width: number | null;
   height: number | null;
+  /** Videos: length in seconds, if known. */
+  duration?: number | null;
 }
 
 export interface Photo {
@@ -57,4 +59,6 @@ export interface Photo {
   catalogOrder: number | null;
   /** Has a row in images.cex (i.e. the file was found in the pCloud folder). */
   indexed: boolean;
+  /** Videos: length in seconds, if known. (A photo or video is told apart by its file name.) */
+  duration?: number | null;
 }

@@ -21,6 +21,10 @@ export interface LocalDir {
 const IMAGE_RE = /\.(jpe?g|png|gif|webp|avif|bmp|heic|heif)$/i;
 export const isImageName = (name: string) => IMAGE_RE.test(name);
 export const isHeicName = (name: string) => /\.hei[cf]$/i.test(name);
+/** Videos (QuickTime / MP4): shown with the photos, played in the photo view and slide shows. */
+export const isVideoName = (name: string) => /\.(mov|mp4|m4v)$/i.test(name);
+/** Photos or videos. */
+export const isMediaName = (name: string) => isImageName(name) || isVideoName(name);
 export const isCatalogName = (name: string) => /\.cex$/i.test(name);
 /** Hidden files/folders, macOS junk, and pCloud thumbnail folders are skipped. */
 export const isSkipped = (name: string) => name.startsWith(".") || name === "_thumbs" || name === "__MACOSX";

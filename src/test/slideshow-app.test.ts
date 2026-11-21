@@ -94,7 +94,7 @@ describe("slide show", () => {
     expect(location.hash).not.toContain("pan=");
     sel("Transition speed").value = "quick"; sel("Transition speed").dispatchEvent(new Event("change"));
     expect(location.hash).toContain("speed=quick");
-    expect([...root.querySelectorAll<HTMLInputElement>(".bar .toggle input")].map((b) => b.checked)).toEqual([true, true, true]);
+    expect([...root.querySelectorAll<HTMLInputElement>(".bar > .toggle input")].map((b) => b.checked)).toEqual([true, true, true]);
     sel("Transition").value = "wipe"; sel("Transition").dispatchEvent(new Event("change"));
     expect(location.hash).toContain("transition=wipe");
     sel("Transition").value = "none"; sel("Transition").dispatchEvent(new Event("change"));
@@ -125,5 +125,45 @@ describe("slide show", () => {
     await tick(1100);
     expect(read(root).src).toBe("https://h/a.jpg");
     expect(root.querySelector<HTMLElement>(".slide-status")!.hidden).toBe(true);
+  }, 5000);
+
+  it("videos play through, then the show moves on; sound and length settings", async () => {
+    let loads = 0;
+    HTMLMediaElement.prototype.load = function (this: HTMLMediaElement) {
+      if (!this.getAttribute("src")) return;
+      loads++;
+      setTimeout(() => this.dispatchEvent(new Event("loadeddata")), 0);
+    };
+    Object.defineProperty(HTMLVideoElement.prototype, "videoWidth", { get: () => 640, configurable: true });
+    const played: HTMLMediaElement[] = [];
+    HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) { played.push(this); return Promise.resolve(); };
+    HTMLMediaElement.prototype.pause = () => {};
+    const cat = "path|caption|credits|license|tags\nc.jpg|Cee|||\nclip.mov|A clip|||\na.jpg|Ay|||\n";
+    history.replaceState(null, "", "/catalogs-slideshow.html#secs=1&photo=clip.mov");
+    view = startSlideshow(root, cfg, { catalogToggle: true, load: async () => buildPhotos(cat, IDX + "clip.mov|2020-06-01||||||1|1\n", cfg.imageBase) });
+    await tick(20);
+    const v = root.querySelector<HTMLVideoElement>(".slide-video.on")!;
+    expect(v).not.toBeNull();
+    expect(v.getAttribute("src")).toBe("https://h/clip.mov");
+    expect(v.muted).toBe(true);
+    expect(played).toContain(v);
+    expect(loads).toBe(1);
+    expect(root.querySelector<HTMLElement>(".video-opts")!.hidden).toBe(false);
+    // Longer than the 1 s per slide: a video isn't cut short by the photo timer.
+    await tick(1200);
+    expect(read(root).counter).toBe("2 / 3");
+    // Sound on: unmuted, kept in the URL.
+    const sound = [...root.querySelectorAll<HTMLLabelElement>(".video-opts .toggle")][0].querySelector("input")!;
+    sound.click();
+    expect(v.muted).toBe(false);
+    expect(location.hash).toContain("sound=1");
+    // When it ends, the next photo comes.
+    v.dispatchEvent(new Event("ended"));
+    await tick(10);
+    expect(read(root)).toMatchObject({ counter: "3 / 3", src: "https://h/a.jpg" });
+    expect(v.getAttribute("src")).toBeNull(); // unloaded once off screen
+    const sel = root.querySelector<HTMLSelectElement>('.bar select[aria-label="Videos"]')!;
+    sel.value = "15"; sel.dispatchEvent(new Event("change"));
+    expect(location.hash).toContain("vmax=15");
   }, 5000);
 });

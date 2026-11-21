@@ -117,4 +117,41 @@ describe("local-image-viewer.html", () => {
     [...root.querySelectorAll<HTMLButtonElement>(".bar .lock")].find((b) => b.textContent === "Open another folder")!.click();
     expect(root.querySelector(".local-start")).not.toBeNull();
   });
+
+  it("videos: a tile with ▶ and the length, played in the photo view without zoom or selections", async () => {
+    // jsdom can't decode video: loading one fails at once, like a browser without the codec.
+    HTMLMediaElement.prototype.load = function (this: HTMLMediaElement) {
+      if (this.getAttribute("src")) setTimeout(() => this.dispatchEvent(new Event("error")), 0);
+    };
+    HTMLMediaElement.prototype.play = () => Promise.resolve();
+    HTMLMediaElement.prototype.pause = () => {};
+    const dir = dirFromFileList([file("Trip/a.jpg"), file("Trip/clip.MOV")])!;
+    const app = startLocalApp(root, { pickDirectory: null, decoder, readExif: async () => undefined,
+      readVideo: async () => ({ date: "2025-09-29T11:40:07", lat: null, lon: null, width: 1080, height: 1920, duration: 15.01 }) });
+    app.open(dir);
+    await settle(root);
+    await tick(20);
+    const vtile = [...root.querySelectorAll<HTMLElement>(".tile")].find((t) => t.title === "clip.MOV")!;
+    expect(vtile.classList.contains("video")).toBe(true);
+    expect(vtile.querySelector(".tile-badge")!.textContent).toBe("▶ 0:15");
+    expect(vtile.classList.contains("broken")).toBe(true); // no poster frame here: plain "▶ Video" tile
+
+    vtile.click();
+    await tick(5);
+    const lb = document.querySelector<HTMLElement>(".lightbox")!;
+    const video = lb.querySelector<HTMLVideoElement>(".lb-video")!;
+    expect(video.hidden).toBe(false);
+    expect(video.getAttribute("src")).toMatch(/^blob:/);
+    expect(lb.querySelector<HTMLElement>(".zoom")!.hidden).toBe(true);
+    expect(lb.querySelector(".selections")).toBeNull();
+    expect([...lb.querySelectorAll("dt")].map((d) => d.textContent)).toContain("Length");
+    video.dispatchEvent(new Event("error")); // as a browser without the codec does
+    expect(lb.querySelector<HTMLElement>(".lb-video-msg")!.hidden).toBe(false);
+
+    // On to the photo: the player stops and the zoom viewer is back.
+    lb.querySelector<HTMLButtonElement>(".nav.next")!.click(); // the dated video comes first
+    expect(video.hidden).toBe(true);
+    expect(video.getAttribute("src")).toBeNull();
+    expect(lb.querySelector<HTMLElement>(".zoom")!.hidden).toBe(false);
+  });
 });

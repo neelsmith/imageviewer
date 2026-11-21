@@ -445,3 +445,9 @@ Synthetic test in headless Chromium (images stubbed, so network excluded):
   backwards slide, rapid key presses, pan pause/resume, reduced motion) and the jsdom tests.
 - Slide-show defaults changed (Neel): 4 s per slide, fade through black, slow.
 - Pan & zoom now on by default (`pan=0` turns it off).
+- Videos, phase 1 (local folders): grid tiles with poster frames and ▶ length, video player in the
+  photo view, video slides; QuickTime/MP4 metadata reader. Checked in headless Chromium with
+  Neel's IMG_4001.MOV (H.264, plays; date/GPS/rotation right) and IMG_5068.MOV (HEVC: no codec
+  in that Chromium → "▶ Video" tile, message in photo view, skipped in the show) plus an ffmpeg
+  test clip. Next: phase 2 (images-index, ffmpeg poster thumbnails, pCloud/www apps).
+

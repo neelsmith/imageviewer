@@ -1,8 +1,11 @@
 import exifr from "exifr";
 import type { ImageRecord } from "../lib/types";
 import { versionInfo } from "../lib/version";
+import { withHash } from "../lib/hash";
 import { dirFromEntry, dirFromFileList, dirFromHandle, type DirHandleLike, type EntryLike, type LocalDir } from "../lib/local/tree";
 import { coordPlace, mapLimit, metaFromExif, NO_META, type PhotoMeta } from "../lib/local/meta";
+import { isVideoName } from "../lib/local/tree";
+import { blobReader, readVideoMeta, type VideoMeta } from "../lib/video-meta";
 import { browseFolder, type PhotoSource } from "./folder-browser";
 import type { ViewStarter } from "./app";
 import { HeicDecoder } from "./local/heic";
@@ -13,6 +16,8 @@ export interface LocalAppDeps {
   readExif?: (f: File) => Promise<Record<string, unknown> | undefined>;
   decoder?: HeicDecoder;
   probeNative?: (f: File) => Promise<boolean>;
+  /** Read a video's metadata (date, GPS, size, length); default reads the file's moov box. */
+  readVideo?: (f: File) => Promise<VideoMeta>;
   /** Folder picker; default window.showDirectoryPicker when the browser has it. */
   pickDirectory?: (() => Promise<DirHandleLike>) | null;
   /** View for the opened folder: the grid (default) or the slide show (local-slideshow.html). */
@@ -37,22 +42,30 @@ async function exifrRead(f: File): Promise<Record<string, unknown> | undefined> 
   });
 }
 
-/** Photos from local files: EXIF read in the browser, images via LocalImages. */
+/** Photos and videos from local files: EXIF (or video metadata) read in the browser, images via LocalImages. */
 export function localSource(deps: { readExif: LocalAppDeps["readExif"]; decoder: HeicDecoder;
-  probeNative?: (f: File) => Promise<boolean> }): PhotoSource {
+  probeNative?: (f: File) => Promise<boolean>; readVideo?: (f: File) => Promise<VideoMeta> }): PhotoSource {
   const readExif = deps.readExif ?? exifrRead;
+  const readVideo = deps.readVideo ?? ((f: File) => readVideoMeta(blobReader(f), f.size));
   return {
     async prepare(imgs) {
       const files = new Map<string, File>();
       const loaded = await mapLimit(imgs, 8, async ({ file: f, rel }) => {
         const file = await f.file();
         let meta: PhotoMeta = NO_META;
-        try { meta = metaFromExif(await readExif(file)); } catch { /* no readable metadata */ }
-        return { rel, file, meta };
+        let video: VideoMeta | null = null;
+        if (isVideoName(rel)) {
+          video = await readVideo(file);
+          meta = { date: video.date, lat: video.lat, lon: video.lon };
+        } else {
+          try { meta = metaFromExif(await readExif(file)); } catch { /* no readable metadata */ }
+        }
+        return { rel, file, meta, video };
       });
-      const records: ImageRecord[] = loaded.map(({ rel, file, meta }) => {
+      const records: ImageRecord[] = loaded.map(({ rel, file, meta, video }) => {
         files.set(rel, file);
-        return { path: rel, date: meta.date, lat: meta.lat, lon: meta.lon, place: coordPlace(meta.lat, meta.lon), width: null, height: null };
+        return { path: rel, date: meta.date, lat: meta.lat, lon: meta.lon, place: coordPlace(meta.lat, meta.lon),
+          width: video?.width ?? null, height: video?.height ?? null, ...(video ? { duration: video.duration } : {}) };
       });
       return { records, images: new LocalImages(files, deps.decoder, deps.probeNative ?? probeNativeHeic) };
     },
@@ -66,7 +79,7 @@ export function localSource(deps: { readExif: LocalAppDeps["readExif"]; decoder:
  */
 export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { open(dir: LocalDir): void } {
   const decoder = deps.decoder ?? new HeicDecoder();
-  const source = localSource({ readExif: deps.readExif, decoder, probeNative: deps.probeNative });
+  const source = localSource({ readExif: deps.readExif, decoder, probeNative: deps.probeNative, readVideo: deps.readVideo });
   const pick = deps.pickDirectory !== undefined ? deps.pickDirectory
     : "showDirectoryPicker" in window
       ? () => (window as unknown as { showDirectoryPicker(o: object): Promise<DirHandleLike> }).showDirectoryPicker({ mode: "read" })
@@ -108,7 +121,7 @@ export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { ope
     });
     root.replaceChildren(el("div", { class: "local-start" },
       el("h1", {}, title),
-      el("p", {}, deps.view ? "Show the photos in a folder on this computer as a slide show. Nothing is uploaded: the files are read here, in this page." : "Browse the photos in a folder on this computer. Nothing is uploaded: the files are read here, in this page."),
+      el("p", {}, deps.view ? "Show the photos and videos in a folder on this computer as a slide show. Nothing is uploaded: the files are read here, in this page." : "Browse the photos and videos in a folder on this computer. Nothing is uploaded: the files are read here, in this page."),
       el("div", { class: "local-actions" }, ...buttons), drop,
       ...(message ? [el("p", { class: "local-message", role: "alert" }, message)] : []),
       el("p", { class: "local-note" }, pick
@@ -119,8 +132,10 @@ export function startLocalApp(root: HTMLElement, deps: LocalAppDeps = {}): { ope
 
   function open(dir: LocalDir) {
     browser?.stop();
-    // A fresh folder starts at its top, without subfolders or catalog choices from before.
-    history.replaceState(null, "", location.pathname + location.search);
+    // A fresh folder starts at its top, without subfolders or catalog choices from before
+    // (view settings such as the slide show's secs= or transition= are kept).
+    history.replaceState(null, "", withHash(location.hash, { dir: null, sub: null, cat: null, photo: null, roi: null,
+      urn: null, all: null, year: null, place: null }) || location.pathname + location.search);
     browser = browseFolder(root, {
       top: dir, source, view: deps.view, title,
       onTeardown: () => decoder.cancelQueued(),

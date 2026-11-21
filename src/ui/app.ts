@@ -10,6 +10,8 @@ import { formatRoi, formatRois, parseRois, roiUrn, type Roi } from "cite-roi";
 import { RoiLayer } from "./roi-layer";
 import { sameImage, splitUrn, urnLink } from "../lib/urn";
 import type { ImageProvider } from "./local/images";
+import { isVideoName } from "../lib/local/tree";
+import { formatDuration } from "../lib/video-meta";
 
 /** Grouping shown when the URL doesn't name one (#group=date|location|tag). */
 export const DEFAULT_MODE: GroupMode = "location";
@@ -242,8 +244,27 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   const prev = el("button", { class: "nav prev", "aria-label": "Previous" }, "‹");
   const next = el("button", { class: "nav next", "aria-label": "Next" }, "›");
   const close = el("button", { class: "close", "aria-label": "Close" }, "×");
+  // Videos play in their own player in place of the zoom viewer (no zoom or selections).
+  const video = el("video", { class: "lb-video", controls: "", playsinline: "", preload: "metadata", hidden: "" });
+  const videoMsg = el("p", { class: "lb-video-msg", hidden: "" });
+  const cantPlay = () => {
+    if (!video.getAttribute("src")) return;
+    video.pause?.();
+    videoMsg.textContent = "This browser can't play this video. Use “Open original” to open it in another app.";
+    videoMsg.hidden = false;
+  };
+  video.addEventListener("error", cantPlay);
+  // A browser without the video codec (e.g. HEVC in Chrome on some computers) may still play
+  // the sound track: no picture means it can't show this video.
+  video.addEventListener("loadedmetadata", () => { if (!video.videoWidth) cantPlay(); });
+  const stopVideo = () => {
+    video.pause?.();
+    video.removeAttribute("src");
+    try { video.load(); } catch { /* jsdom */ }
+    video.hidden = true; videoMsg.hidden = true;
+  };
   const lb = el("div", { class: "lightbox", hidden: "", role: "dialog", "aria-modal": "true" },
-    el("div", { class: "stage" }, viewer.el, roiLayer.el, prev, next, close, viewer.controls), lbInfo);
+    el("div", { class: "stage" }, viewer.el, roiLayer.el, video, videoMsg, prev, next, close, viewer.controls), lbInfo);
   document.body.append(lb);
   let current = -1;
   let fullToken = 0; // ignores full images that arrive after moving on
@@ -347,9 +368,25 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     current = i;
     const p = visible[i];
     const alt = p.caption || p.path;
-    if (opts.images) {
+    const isVideo = isVideoName(p.path);
+    viewer.el.hidden = viewer.controls.hidden = roiLayer!.el.hidden = isVideo;
+    stopVideo();
+    const token = ++fullToken;
+    if (isVideo) {
+      viewer.clear();
+      roiLayer!.setSelecting(false);
+      video.hidden = false;
+      const play = (url: string) => {
+        if (token !== fullToken) return;
+        video.src = url;
+        video.play?.()?.catch?.(() => { /* autoplay refused: the controls are there */ });
+      };
+      if (opts.images) opts.images.full(p).then((r) => play(r.url),
+        (e) => { if (token === fullToken) { videoMsg.textContent = `Can't play: ${e.message}`; videoMsg.hidden = false; } });
+      else play(p.url);
+    } else if (opts.images) {
       // Show the tile (stretched) at once if we know the photo's size, then the full image.
-      const imgs = opts.images, token = ++fullToken;
+      const imgs = opts.images;
       const known = imgs.size(p), ph = imgs.placeholder(p);
       if (known && ph) viewer.preview(ph, alt, known);
       imgs.full(p).then(
@@ -363,7 +400,8 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       ["Caption", p.caption], ["Year", p.year], ["Place", p.placeName],
       ["Date", p.date ? formatDate(p.date) : ""],
       // EXIF/GPS place from images.cex; labelled "Location" when the catalog also names a place.
-      [p.placeName ? "Location" : "Place", p.place ? placeLabel(p.place) : ""], ["Tags", p.tags.join(", ")],
+      [p.placeName ? "Location" : "Place", p.place ? placeLabel(p.place) : ""], ["Length", formatDuration(p.duration)],
+      ["Tags", p.tags.join(", ")],
       ["Credits", p.credits], ["License", p.license], ["File", p.path], ["URN", p.urn],
     ];
     lbInfo.replaceChildren(
@@ -371,13 +409,13 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
       el("dl", {}, ...rows.filter(([, v]) => v).flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])),
       el("a", { href: opts.images?.originalUrl?.(p) ?? p.url, target: "_blank", rel: "noopener" }, "Open original ↗"),
       ...(p.urn ? [linkButton(p.urn, "Copy link", "Copy a link that opens this photo by its URN")] : []),
-      selBox,
+      ...(isVideo ? [] : [selBox]), // region selections are for photos only
     );
     // Selections: from a link (roi= in the URL) when opening from the URL, else this session's.
-    const fromUrl = how === "none" && readHash(location.hash).photo === p.path ? parseRois(readHash(location.hash).roi ?? "") : [];
+    const fromUrl = !isVideo && how === "none" && readHash(location.hash).photo === p.path ? parseRois(readHash(location.hash).roi ?? "") : [];
     if (fromUrl.length) selections.set(selectionKey(p), { photo: p, rois: fromUrl });
-    roiLayer!.set(selections.get(selectionKey(p))?.rois ?? []);
-    renderSelections(p);
+    roiLayer!.set(isVideo ? [] : selections.get(selectionKey(p))?.rois ?? []);
+    if (!isVideo) renderSelections(p);
     refreshSelBtn();
     prev.disabled = i === 0;
     next.disabled = i === visible.length - 1;
@@ -387,7 +425,7 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     if (how !== "none") setPhotoHash(p.path, how === "push");
   }
   const closeLightbox = () => {
-    lb.hidden = true; viewer.clear(); current = -1; fullToken++;
+    lb.hidden = true; viewer.clear(); stopVideo(); current = -1; fullToken++;
     roiLayer!.setSelecting(false); roiLayer!.set([]);
   };
   function hide() {
@@ -414,6 +452,8 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
   close.addEventListener("click", hide);
   const onKey = (e: KeyboardEvent) => {
     if (lb.hidden) return;
+    // A focused video player keeps its own keys (space, ← → to seek); Escape still closes.
+    if (e.target === video && e.key !== "Escape") return;
     if (roiLayer!.handleKey(e)) { e.preventDefault(); return; }
     if (e.key === "Escape") hide();
     else if (e.key === "ArrowLeft") show(current - 1);
@@ -440,6 +480,10 @@ export function startApp(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {
     const img = el("img", { alt: p.caption || p.path, decoding: "async" });
     const b = el("button", { class: "tile", type: "button", title: p.caption || p.path }, img,
       el("span", { class: "tile-caption" }, p.caption)); // shown when "Captions" is ticked
+    if (isVideoName(p.path)) {
+      b.classList.add("video");
+      b.append(el("span", { class: "tile-badge" }, `▶${p.duration ? " " + formatDuration(p.duration) : ""}`));
+    }
     if (!p.cataloged && opts.markUncataloged !== false) b.classList.add("uncataloged");
     if (opts.images) {
       const imgs = opts.images;

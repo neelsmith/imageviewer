@@ -229,3 +229,29 @@ npm run thumbnails   -- --root /path/to/WWW_ROOT/images
   `catalog=`, `dir=`/`sub=`/`cat=`, `all=1`, `year=`, `place=`.
 - Tests: `test/slideshow.test.ts` (order, settings), `test/slideshow-app.test.ts` (jsdom flow),
   `build.test.ts` (ten pages).
+
+## Videos (phase 1: local folders)
+
+- `.mov`, `.mp4`, `.m4v` (`isVideoName`, `isMediaName` in `lib/local/tree.ts`) appear with the
+  photos in local-image-viewer.html and local-slideshow.html. Told apart by file name; catalogs
+  list them by path like photos. `Photo.duration` / `ImageRecord.duration` (seconds, optional).
+- `lib/video-meta.ts`: reads the `moov` box through a random-access reader (`blobReader` for a
+  File; a Node file handle works too — for images-index in phase 2). Date: Apple
+  `com.apple.quicktime.creationdate` (local time), else `©day`, else mvhd time (UTC). GPS: Apple
+  `…location.ISO6709` (moov/meta or moov/udta/meta), else `©xyz`. Size from the video track,
+  swapped for 90°/270° rotation. Checked against ffprobe on Neel's iPhone .MOVs.
+- Grid: tile class `video`, badge "▶ 0:42". Local poster frames: `ui/local/video.ts` loads the
+  video off-screen (two at a time), seeks ~1 s in, draws a 480 px JPEG. No codec → tile `broken`
+  shown as "▶ Video".
+- Photo view: `<video controls>` replaces the zoom viewer; no zoom, no region selections;
+  "Length" row. Unplayable (error, or no picture = codec missing but sound playing, as Chrome does
+  for HEVC) → message pointing to "Open original". A focused player keeps its own keys.
+- Slide show: layers hold an `<img>` and a `<video>`. A video slide waits for `loadeddata` (with a
+  picture), plays (muted unless Sound; falls back to muted if the browser refuses), and moves on
+  when it ends or after `vmax` (15/30/60 s; "Whole videos" default); pause pauses it; no pan &
+  zoom. Hash `sound=1`, `vmax=`. Controls appear only when the show has videos. Unplayable →
+  message, then the normal timer.
+- Codecs: Safari plays H.264 and HEVC; Chrome/Edge play H.264, HEVC only with hardware support.
+- local-app `open()` now keeps view settings in the hash (slide-show secs=, transition=…) and
+  drops only folder/photo keys.
+

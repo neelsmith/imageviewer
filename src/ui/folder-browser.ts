@@ -2,7 +2,7 @@ import { parseCatalog } from "../lib/catalog";
 import { mergePhotos } from "../lib/merge";
 import type { ImageRecord, Photo } from "../lib/types";
 import { readHash, withHash } from "../lib/hash";
-import { collect, findDir, isCatalogName, isImageName, type LocalDir, type LocalFile } from "../lib/local/tree";
+import { collect, findDir, isCatalogName, isMediaName, type LocalDir, type LocalFile } from "../lib/local/tree";
 import { startApp, type AppHandle, type ViewStarter } from "./app";
 import { findUrnInCatalog, splitUrn } from "../lib/urn";
 import { missingNotice, type LoadResult, type Notice } from "./load";
@@ -134,7 +134,7 @@ export function browseFolder(root: HTMLElement, opts: FolderBrowserOptions): { s
 
     const load = async (): Promise<LoadResult> => {
       const { files: found } = await collect(here, recursive);
-      const imgs = found.filter((f) => isImageName(f.name)).map((file) => ({ file, rel: rel(file.path) }));
+      const imgs = found.filter((f) => isMediaName(f.name)).map((file) => ({ file, rel: rel(file.path) }));
       const { records, images: provider } = await source.prepare(imgs);
       if (id !== routeId) { provider.dispose?.(); return { photos: [], missingFiles: [], warnings: [] }; }
       current = provider;

@@ -1,5 +1,6 @@
 import type { Photo } from "../../lib/types";
-import { isHeicName } from "../../lib/local/tree";
+import { isHeicName, isVideoName } from "../../lib/local/tree";
+import { videoFrame } from "./video";
 import type { HeicDecoder } from "./heic";
 
 /** What the grid and photo view need to show photos that aren't plain URLs. */
@@ -23,7 +24,8 @@ export interface ImageProvider {
 type Size = { w: number; h: number };
 
 /**
- * Images from local files. JPEG/PNG/WebP/GIF are shown straight from the file. HEIC:
+ * Images from local files. JPEG/PNG/WebP/GIF are shown straight from the file. Videos play
+ * straight from the file; their tiles are a frame grabbed in the browser (./video.ts). HEIC:
  * grid tiles come from the thumbnail stored inside the file (decoded by libheif in a
  * worker); the photo view uses the browser's own HEIC support when it has one (Safari)
  * and otherwise decodes the full image in a worker.
@@ -102,6 +104,11 @@ export class LocalImages implements ImageProvider {
   }
 
   private async makeTile(p: Photo): Promise<string> {
+    if (isVideoName(p.path)) {
+      const f = await videoFrame(this.originalUrl(p));
+      this.sizes.set(p.path, { w: f.w, h: f.h });
+      return this.track(URL.createObjectURL(f.blob));
+    }
     if (!isHeicName(p.path)) return this.originalUrl(p); // shown full size, as decided
     const d = await this.decoder.thumb(this.file(p));
     this.sizes.set(p.path, { w: d.fullW, h: d.fullH });

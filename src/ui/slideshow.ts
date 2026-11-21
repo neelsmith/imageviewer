@@ -9,6 +9,7 @@ import {
   type SlideOrder, type Speed, type Transition,
 } from "../lib/slideshow";
 import { sameImage, splitUrn } from "../lib/urn";
+import { isVideoName } from "../lib/local/tree";
 import { formatDate, type AppHandle, type AppOptions } from "./app";
 import { loadRemote, type LoadResult, type Notice } from "./load";
 
@@ -43,7 +44,8 @@ const IDLE_MS = 2500;
  *
  * URL hash: secs=<seconds per slide> (1–600, default 4), order=catalog|date|name|shuffle,
  * transition=black|slide|dissolve|wipe|zoom|none (default black), speed=quick|normal|slow (default slow),
- * pan=0 turns off the slow pan and zoom on each photo (on by default), captions=0 hides the caption overlay, photo=<path> is the slide on screen (so a link
+ * pan=0 turns off the slow pan and zoom on each photo (on by default), sound=1 plays videos with
+ * sound, vmax=15|30|60 plays at most that many seconds of each video (default: all of it), captions=0 hides the caption overlay, photo=<path> is the slide on screen (so a link
  * starts there), urn=<image urn> starts at that image; all=1, year=, place= as in the grid.
  */
 export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptions = {}): AppHandle {
@@ -59,6 +61,8 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
   let transition: Transition = parseTransition(h0.transition);
   let speed: Speed = parseSpeed(h0.speed);
   let pan = h0.pan !== "0";
+  let sound = h0.sound === "1";
+  let vmax = [15, 30, 60].includes(Number(h0.vmax)) ? Number(h0.vmax) : 0;
   const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   let playing = true;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -99,6 +103,23 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
     setHash({ pan: pan ? null : "0" });
     if (pan) startPan(layers[front]); else panAnim?.cancel();
   });
+  // Videos: sound (off by default: browsers only autoplay muted video) and how much to play.
+  const soundBox = el("input", { type: "checkbox" });
+  soundBox.checked = sound;
+  soundBox.addEventListener("change", () => {
+    sound = soundBox.checked;
+    setHash({ sound: sound ? "1" : null });
+    if (curVideo) { curVideo.muted = !sound; if (playing) playVideo(curVideo); }
+  });
+  const vmaxSel = el("select", { class: "facet-select", "aria-label": "Videos" });
+  for (const [v, label] of [[0, "Whole videos"], [15, "Videos: 15 s"], [30, "Videos: 30 s"], [60, "Videos: 60 s"]] as const)
+    vmaxSel.add(new Option(label, String(v), false, v === vmax));
+  vmaxSel.addEventListener("change", () => {
+    vmax = Number(vmaxSel.value);
+    setHash({ vmax: vmax ? String(vmax) : null });
+    if (curVideo) schedule();
+  });
+  const videoOpts = el("span", { class: "video-opts", hidden: "" }, vmaxSel, el("label", { class: "toggle" }, soundBox, " Sound"));
   function facetSelect(facet: Facet, label: string, anyLabel: string) {
     const sel = el("select", { class: "facet-select", "aria-label": label, hidden: "" });
     sel.dataset.facet = facet;
@@ -142,7 +163,7 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
   });
   toggles.push(el("label", { class: "toggle" }, capBox, " Captions"));
   const header = el("header", { class: "bar" }, el("h1", {}, "Slide show"), ...(opts.toolbar ?? []),
-    orderSel, yearSel, placeSel, transSel, speedSel, el("label", { class: "toggle" }, panBox, " Pan & zoom"), ...toggles, el("span", { class: "count" }), versionInfo());
+    orderSel, yearSel, placeSel, transSel, speedSel, el("label", { class: "toggle" }, panBox, " Pan & zoom"), videoOpts, ...toggles, el("span", { class: "count" }), versionInfo());
   if (opts.onLock) {
     const lock = el("button", { type: "button", class: "lock", title: "Lock (forget password on this device)" }, "Lock");
     lock.addEventListener("click", opts.onLock);
@@ -152,8 +173,12 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
 
   // ---- Stage: two image layers for the cross-fade, caption, controls ----
   // Two layers (a box holding the photo) take turns: the incoming one animates in over the other.
-  const layers = [0, 1].map(() => el("div", { class: "slide-layer" }, el("img", { class: "slide", alt: "" })));
-  const imgOf = (l: HTMLElement) => l.firstElementChild as HTMLImageElement;
+  const layers = [0, 1].map(() => el("div", { class: "slide-layer" }, el("img", { class: "slide", alt: "" }),
+    el("video", { class: "slide-video", playsinline: "", muted: "", preload: "auto", hidden: "" })));
+  const imgOf = (l: HTMLElement) => l.querySelector("img")!;
+  const vidOf = (l: HTMLElement) => l.querySelector("video")!;
+  /** The video on screen (null for a photo). */
+  let curVideo: HTMLVideoElement | null = null;
   let front = 0;
   const caption = el("div", { class: "slide-caption" });
   const status = el("p", { class: "slide-status" }, "Loading…");
@@ -181,7 +206,49 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
   function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
   function schedule() {
     clearTimer();
-    if (playing && alive && list.length > 1) timer = setTimeout(() => go(index + 1), secs * 1000);
+    if (!playing || !alive) return;
+    if (curVideo) {
+      // A video moves on when it ends (see go), or after vmax seconds.
+      if (vmax) timer = setTimeout(() => go(index + 1), Math.max(0, vmax - (curVideo.currentTime || 0)) * 1000);
+      return;
+    }
+    if (list.length > 1) timer = setTimeout(() => go(index + 1), secs * 1000);
+  }
+
+  function playVideo(v: HTMLVideoElement) {
+    const p = v.play?.();
+    // Browsers may refuse sound before the page has been clicked: fall back to muted.
+    p?.catch?.(() => { if (!v.muted) { v.muted = true; v.play?.()?.catch?.(() => {}); } });
+  }
+
+  function unloadVideo(v: HTMLVideoElement) {
+    v.onended = null;
+    v.pause?.();
+    v.removeAttribute("src");
+    try { v.load(); } catch { /* jsdom */ }
+    v.hidden = true;
+    v.classList.remove("on");
+  }
+
+  /** Load a video into an element; resolves once its first frame can be shown. */
+  function loadVideo(v: HTMLVideoElement, url: string): Promise<void> {
+    return new Promise((ok, fail) => {
+      const t = setTimeout(() => done(new Error("this browser can't play this video")), 20_000);
+      const done = (e?: Error) => {
+        clearTimeout(t);
+        v.removeEventListener("loadeddata", onData);
+        v.removeEventListener("error", onErr);
+        if (e) fail(e); else ok();
+      };
+      // No picture (the browser lacks the codec but plays the sound track) counts as unplayable.
+      const onData = () => (v.videoWidth ? done() : done(new Error("this browser can't play this video")));
+      const onErr = () => done(new Error("this browser can't play this video"));
+      v.addEventListener("loadeddata", onData);
+      v.addEventListener("error", onErr);
+      v.muted = !sound;
+      v.src = url;
+      try { v.load(); } catch { /* jsdom */ }
+    });
   }
 
   function renderCaption() {
@@ -216,7 +283,7 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
     const img = imgOf(layer);
     img.getAnimations?.().forEach((x) => x.cancel());
     panAnim = null;
-    if (!pan || reducedMotion() || !canAnimate(img)) return;
+    if (!pan || img.hidden || reducedMotion() || !canAnimate(img)) return;
     const tms = transitionMs(transition, speed, secs);
     panAnim = img.animate(panFrames(), { duration: secs * 1000 + tms + 500, easing: "linear", fill: "forwards" });
     if (!playing) panAnim.pause();
@@ -227,8 +294,10 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
     finishSwap?.(); // a transition still running ends at once
     const incoming = layers[1 - front], outgoing = layers[front];
     front = 1 - front;
-    imgOf(incoming).classList.add("on");
+    const inMedia = imgOf(incoming).hidden ? vidOf(incoming) : imgOf(incoming);
+    inMedia.classList.add("on");
     imgOf(outgoing).classList.remove("on");
+    vidOf(outgoing).classList.remove("on");
     incoming.style.zIndex = "2";
     outgoing.style.zIndex = "1";
     incoming.style.opacity = "1";
@@ -240,6 +309,7 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
       running = [];
       outgoing.style.opacity = "0";
       imgOf(outgoing).getAnimations?.().forEach((a) => a.cancel());
+      if (vidOf(outgoing).getAttribute("src")) unloadVideo(vidOf(outgoing));
     };
     finishSwap = done;
     const t = effectiveTransition(transition, reducedMotion());
@@ -263,20 +333,39 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
     const p = list[index];
     renderCounter();
     setHash({ photo: p.path, urn: null });
+    const isVideo = isVideoName(p.path);
+    const layer = layers[1 - front];
+    const backImg = imgOf(layer), backVid = vidOf(layer);
     try {
       const url = await urlFor(p);
-      await decodeImage(url);
       if (t !== token || !alive) return;
-      const back = imgOf(layers[1 - front]);
-      back.src = url;
-      back.alt = p.caption || p.path;
+      if (isVideo) {
+        finishSwap?.(); // the back layer must be free before loading into it
+        await loadVideo(backVid, url);
+      } else await decodeImage(url);
+      if (t !== token || !alive) { if (isVideo) unloadVideo(backVid); return; }
+      backImg.hidden = isVideo;
+      backVid.hidden = !isVideo;
+      if (isVideo) {
+        backImg.removeAttribute("src");
+        backVid.currentTime = 0;
+        backVid.onended = () => { if (t === token && playing) go(index + 1); };
+      } else {
+        backImg.src = url;
+        backImg.alt = p.caption || p.path;
+      }
+      const prevVideo = curVideo;
+      curVideo = isVideo ? backVid : null;
       swapLayers(dir);
+      if (prevVideo && prevVideo !== curVideo) prevVideo.pause?.();
+      if (curVideo && playing) playVideo(curVideo);
       status.hidden = true;
     } catch (e) {
       if (t !== token || !alive) return;
       finishSwap?.();
-      layers.forEach((l) => { imgOf(l).classList.remove("on"); l.style.opacity = "0"; });
-      status.textContent = `Can't display ${p.path}${e instanceof Error && e.message ? `: ${e.message}` : ""}`;
+      curVideo = null;
+      layers.forEach((l) => { imgOf(l).classList.remove("on"); unloadVideo(vidOf(l)); l.style.opacity = "0"; });
+      status.textContent = `Can't ${isVideo ? "play" : "display"} ${p.path}${e instanceof Error && e.message ? `: ${e.message}` : ""}`;
       status.hidden = false;
     }
     renderCaption();
@@ -288,6 +377,7 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
   function preload(i: number) {
     if (list.length < 2) return;
     const p = list[wrap(i, list.length)];
+    if (isVideoName(p.path)) return; // loaded when its turn comes (local files open at once)
     urlFor(p).then(decodeImage).catch(() => { /* reported when it's shown */ });
   }
 
@@ -298,10 +388,12 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
     const pool = catalogedOnly ? all.filter((p) => p.cataloged) : all;
     header.querySelector(".count")!.textContent = `${list.length} of ${pool.length} ${catalogedOnly ? "cataloged " : ""}photos`;
     const at = was ? list.findIndex((p) => p.path === was) : -1;
+    videoOpts.hidden = !list.some((p) => isVideoName(p.path));
     if (!list.length) {
       clearTimer(); token++;
       finishSwap?.();
-      layers.forEach((l) => { imgOf(l).classList.remove("on"); l.style.opacity = "0"; });
+      curVideo = null;
+      layers.forEach((l) => { imgOf(l).classList.remove("on"); unloadVideo(vidOf(l)); l.style.opacity = "0"; });
       status.textContent = !all.length ? "No photos loaded." : "No photos match these settings.";
       status.hidden = false;
       index = 0;
@@ -318,7 +410,9 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
     playBtn.title = on ? "Pause (space)" : "Play (space)";
     playBtn.setAttribute("aria-label", playBtn.title);
     stage.classList.toggle("paused", !on);
-    if (on) { wake(); schedule(); panAnim?.play(); } else { clearTimer(); unwake(); panAnim?.pause(); }
+    if (on && curVideo?.ended) { wake(); go(index + 1); }
+    else if (on) { wake(); schedule(); panAnim?.play(); if (curVideo) playVideo(curVideo); }
+    else { clearTimer(); unwake(); panAnim?.pause(); curVideo?.pause?.(); }
     poke();
   }
   prevBtn.addEventListener("click", () => go(index - 1, -1));
@@ -449,6 +543,7 @@ export function startSlideshow(root: HTMLElement, cfg: AppConfig, opts: AppOptio
       clearTimer();
       finishSwap?.();
       panAnim?.cancel();
+      layers.forEach((l) => unloadVideo(vidOf(l)));
       if (idleTimer) clearTimeout(idleTimer);
       unwake();
       document.removeEventListener("keydown", onKey);
